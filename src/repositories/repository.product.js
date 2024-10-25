@@ -1,18 +1,23 @@
 import pool from "../db/connection.js";
 
 const getProductsByClient = async (company_id) => {
-  const query = "SELECT * FROM products WHERE company_id = $1";
+  const query = `SELECT p.*, COALESCE(s.quantity, 0) AS quantity
+    FROM products p
+    LEFT JOIN stock s ON p.id = s.product_id
+    WHERE p.company_id = $1`;
   const values = [company_id];
 
   try {
     const result = await pool.query(query, values);
 
-    // Verifica se há produtos
-    if (result.rows.length === 0) {
-      return null; // Retorna null se não houver produtos
-    }
+    return result.rows.length ? result.rows : null;
 
-    return result.rows; // Retorna o array de produtos
+    // Verifica se há produtos
+    // if (result.rows.length === 0) {
+    //   return null; // Retorna null se não houver produtos
+    // }
+
+    //return result.rows; // Retorna o array de produtos
   } catch (error) {
     console.error("Erro ao buscar produtos: ", error);
     throw new Error("Erro ao buscar produtos");
