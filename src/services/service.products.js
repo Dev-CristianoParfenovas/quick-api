@@ -32,19 +32,44 @@ const createProduct = async (
   }
 };
 
-// Atualização de estoque
-const updateStock = async (product_id, quantity, company_id) => {
+export const updateProductAndStockService = async (
+  product_id,
+  name,
+  category_id,
+  price,
+  quantity,
+  company_id
+) => {
   try {
-    // Lógica de negócio para atualizar o estoque
-    const updatedStock = await productRepository.updateStock(
+    const result = await productRepository.updateProductAndStock(
       product_id,
+      name,
+      category_id,
+      price,
       quantity,
       company_id
     );
-    return updatedStock;
-  } catch (err) {
-    throw new Error("Erro ao atualizar o estoque");
+
+    if (!result) {
+      return {
+        status: 404,
+        message: "Produto não encontrado ou não atualizado.",
+      };
+    }
+
+    return { status: 200, data: result };
+  } catch (error) {
+    console.error(
+      "Erro no serviço de atualização de produto e estoque:",
+      error.message,
+      error.stack
+    );
+    throw new Error("Erro ao atualizar produto e estoque.");
   }
 };
 
-export default { getProductsByClient, createProduct, updateStock };
+export default {
+  getProductsByClient,
+  createProduct,
+  updateProductAndStockService,
+};

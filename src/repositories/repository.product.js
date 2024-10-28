@@ -71,46 +71,70 @@ const createProduct = async (
   }
 };
 
-// Atualiza o estoque de um produto
-const updateStock = async (product_id, quantity, company_id) => {
-  const querySelect = `
-        SELECT * FROM stock WHERE product_id = $1 AND company_id = $2
-    `;
-  const valuesSelect = [product_id, company_id];
+const updateProductAndStock = async (
+  product_id,
+  name,
+  category_id,
+  price,
+  quantity,
+  company_id
+) => {
+  const client = await pool.connect(); // Conectar ao pool para iniciar a transação
 
   try {
-    // Verifica se o produto já tem estoque na tabela 'stok'
-    const result = await pool.query(querySelect, valuesSelect);
+    // Iniciar uma transação para garantir a integridade dos dados
+    await client.query("BEGIN");
 
-    if (result.rows.length > 0) {
-      // Se o estoque já existir, atualize a quantidade
-      const queryUpdate = `
-            UPDATE stock
-            SET quantity = quantity + $1
-            WHERE product_id = $2 AND company_id = $3
-            RETURNING *
-        `;
-      const valuesUpdate = [quantity, product_id, company_id];
-      const updatedResult = await pool.query(queryUpdate, valuesUpdate);
-      return updatedResult.rows[0];
-    } else {
-      // Se o estoque não existir, insere um novo registro
-      const queryInsert = `
-            INSERT INTO stock (product_id, quantity, company_id)
-            VALUES ($1, $2, $3) RETURNING *
-        `;
-      const valuesInsert = [product_id, quantity, company_id];
-      const insertedResult = await pool.query(queryInsert, valuesInsert);
-      return insertedResult.rows[0];
+    // Atualizar os detalhes do produto
+    const queryProduct = `
+      UPDATE products
+      SET name = $1, category_id = $2, price = $3
+      WHERE id = $4 AND company_id = $5
+      RETURNING *
+    `;
+    const valuesProduct = [name, category_id, price, product_id, company_id];
+    const productResult = await client.query(queryProduct, valuesProduct);
+
+    // Verificar se o produto foi encontrado e atualizado
+    if (productResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+      console.error("Produto não encontrado para atualização");
+      return null; // Retorna null se o produto não existir para essa empresa
     }
+
+    // Inserir ou atualizar o estoque
+    const queryStock = `
+      INSERT INTO stock (product_id, quantity, company_id)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (product_id, company_id)
+      DO UPDATE SET quantity = $2
+      RETURNING *
+    `;
+    const valuesStock = [product_id, quantity, company_id];
+    const stockResult = await client.query(queryStock, valuesStock);
+
+    // Confirmar a transação se ambas as operações foram bem-sucedidas
+    await client.query("COMMIT");
+
+    // Retornar o produto atualizado e o estoque
+    return { product: productResult.rows[0], stock: stockResult.rows[0] };
   } catch (error) {
-    console.error("Erro ao atualizar o estoque: ", error);
-    throw new Error("Erro ao atualizar o estoque");
+    // Reverter a transação em caso de erro
+    await client.query("ROLLBACK");
+    console.error(
+      "Erro ao atualizar produto e estoque: ",
+      error.message,
+      error.stack
+    );
+    throw new Error("Erro ao atualizar produto e estoque");
+  } finally {
+    // Liberar o cliente
+    client.release();
   }
 };
 
 export default {
   getProductsByClient,
   createProduct,
-  updateStock,
+  updateProductAndStock, // substitui updateStock pela função combinada
 };
