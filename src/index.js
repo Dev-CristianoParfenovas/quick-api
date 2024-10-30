@@ -5,6 +5,7 @@ import routercompany from "./routes/routes.company.js";
 import routerclient from "./routes/routes.client.js";
 import routeremployee from "./routes/routes.employee.js";
 import routercategory from "./routes/routes.category.js";
+import routersales from "./routes/routes.sales.js";
 import dotenv from "dotenv";
 
 dotenv.config(); // Carregar variáveis de ambiente
@@ -17,7 +18,8 @@ app.use(
   routercompany,
   routerclient,
   routeremployee,
-  routercategory
+  routercategory,
+  routersales
 );
 
 const PORT = process.env.PORT || 3000;
