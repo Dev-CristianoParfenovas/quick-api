@@ -20,4 +20,10 @@ routerproduct.put(
   productController.updateProductAndStockController
 );
 
+routerproduct.delete(
+  "/products/:company_id",
+  jwt.validateJWT,
+  productController.deleteProductController
+);
+
 export default routerproduct;

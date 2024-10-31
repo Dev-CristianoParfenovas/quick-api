@@ -2,13 +2,15 @@ import pool from "../db/connection.js";
 
 const createSale = async (saleData) => {
   const query = `
-    INSERT INTO sales (company_id, product_id, quantity, total_price, sale_date)
-    VALUES ($1, $2, $3, $4, $5)
+    INSERT INTO sales (company_id, product_id, id_client, employee_id, quantity, total_price, sale_date)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *;
   `;
   const values = [
     saleData.company_id,
     saleData.product_id,
+    saleData.id_client,
+    saleData.employee_id,
     saleData.quantity,
     saleData.total_price,
     saleData.sale_date || new Date(),

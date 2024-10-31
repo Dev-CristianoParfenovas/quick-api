@@ -1,5 +1,6 @@
 import pool from "../db/connection.js";
 
+//TRAS O PRODUTO(SELECT)
 const getProductsByClient = async (company_id) => {
   const query = `SELECT p.*, COALESCE(s.quantity, 0) AS quantity
     FROM products p
@@ -24,6 +25,7 @@ const getProductsByClient = async (company_id) => {
   }
 };
 
+//INSERE PRODUTO E ESTOQUE
 const createProduct = async (
   name,
   category_id,
@@ -71,6 +73,7 @@ const createProduct = async (
   }
 };
 
+//ALTERA PRODUTO E ESTOQUE
 const updateProductAndStock = async (
   product_id,
   name,
@@ -133,8 +136,50 @@ const updateProductAndStock = async (
   }
 };
 
+//DELETA PRODUTO
+const deleteProduct = async (product_id, company_id) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Primeiro, excluir o estoque associado ao produto
+    const deleteStockQuery = `
+      DELETE FROM stock
+      WHERE product_id = $1 AND company_id = $2
+    `;
+    await client.query(deleteStockQuery, [product_id, company_id]);
+
+    // Em seguida, excluir o produto
+    const deleteProductQuery = `
+      DELETE FROM products
+      WHERE id = $1 AND company_id = $2
+      RETURNING *
+    `;
+    const result = await client.query(deleteProductQuery, [
+      product_id,
+      company_id,
+    ]);
+
+    if (result.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return null; // Produto não encontrado
+    }
+
+    await client.query("COMMIT");
+    return result.rows[0]; // Produto excluído com sucesso
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Erro ao deletar produto e estoque:", error);
+    throw new Error("Erro ao deletar produto e estoque");
+  } finally {
+    client.release();
+  }
+};
+
 export default {
   getProductsByClient,
   createProduct,
   updateProductAndStock, // substitui updateStock pela função combinada
+  deleteProduct,
 };

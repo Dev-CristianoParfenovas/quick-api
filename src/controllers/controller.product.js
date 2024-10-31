@@ -68,11 +68,9 @@ export const updateProductAndStockController = async (req, res) => {
       !company_id
     ) {
       console.error("Dados incompletos para atualizar produto e estoque.");
-      return res
-        .status(400)
-        .json({
-          message: "Dados incompletos para atualizar produto e estoque.",
-        });
+      return res.status(400).json({
+        message: "Dados incompletos para atualizar produto e estoque.",
+      });
     }
 
     // Chamando o serviço e esperando o resultado
@@ -107,8 +105,29 @@ export const updateProductAndStockController = async (req, res) => {
   }
 };
 
+const deleteProductController = async (req, res) => {
+  const { company_id } = req.params;
+  const { product_id } = req.body;
+
+  try {
+    const deletedProduct = await serviceProducts.deleteProductService(
+      product_id,
+      company_id
+    );
+
+    return res.status(200).json({
+      message: "Produto excluído com sucesso",
+      product: deletedProduct,
+    });
+  } catch (error) {
+    console.error("Erro no controlador ao deletar produto:", error);
+    res.status(500).json({ error: "Erro ao excluir produto" });
+  }
+};
+
 export default {
   getProducts,
   createProduct,
   updateProductAndStockController,
+  deleteProductController,
 };

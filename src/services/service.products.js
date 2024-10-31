@@ -68,8 +68,22 @@ export const updateProductAndStockService = async (
   }
 };
 
+const deleteProductService = async (product_id, company_id) => {
+  const deletedProduct = await productRepository.deleteProduct(
+    product_id,
+    company_id
+  );
+
+  if (!deletedProduct) {
+    throw new Error("Produto não encontrado ou já excluído");
+  }
+
+  return deletedProduct;
+};
+
 export default {
   getProductsByClient,
   createProduct,
   updateProductAndStockService,
+  deleteProductService,
 };
