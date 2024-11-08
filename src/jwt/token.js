@@ -1,9 +1,14 @@
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
-const secretToken = "28Mel10Cr20Nt@777";
+// Carregar as variáveis de ambiente
+dotenv.config();
 
-function createJWT(id_user) {
-  const token = jwt.sign({ id_user }, secretToken, {
+// Obtenha o segredo do JWT a partir da variável de ambiente
+const secretToken = process.env.SECRET_TOKEN;
+
+function createJWT(id_user, id_employee) {
+  const token = jwt.sign({ id_user, id_employee }, secretToken, {
     expiresIn: "7d", // Define a expiração do token para 7 dias
   });
   return token;

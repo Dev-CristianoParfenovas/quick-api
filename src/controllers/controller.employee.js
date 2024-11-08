@@ -1,20 +1,36 @@
-import serviceEmployee from "../services/service.employee.js";
+import EmployeeService from "../services/service.employee.js";
 
 const createEmployee = async (req, res) => {
-  const { name, email, phone, password, company_id } = req.body;
+  const { name, email, phone, password, company_id, is_admin } = req.body;
+
   try {
-    // Chamando o serviço de funcionario para criar um funcionario
-    const employee = await serviceEmployee.createEmployee(
+    // Chama o serviço para criar o funcionário com criptografia e geração do token JWT
+    const { employee, token } = await EmployeeService.createEmployee(
       name,
       email,
       phone,
       password,
-      company_id
+      company_id,
+      is_admin
     );
-    res.status(201).json(employee);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    // Retorna o novo funcionário e o token gerado ao cliente
+    res.status(201).json({
+      message: "Funcionário criado com sucesso.",
+      employee,
+      token,
+    });
+  } catch (error) {
+    console.error("Erro no controller ao criar funcionário:", error);
+
+    // Retorna uma resposta de erro caso ocorra uma exceção
+    res.status(500).json({
+      message: "Erro ao criar funcionário.",
+      error: error.message,
+    });
   }
 };
 
-export default { createEmployee };
+export default {
+  createEmployee,
+};
