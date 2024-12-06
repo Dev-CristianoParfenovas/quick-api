@@ -1,6 +1,6 @@
 import employeeRepository from "../repositories/repository.employee.js";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt from "../jwt/token.js";
 import dotenv from "dotenv";
 
 // Carregar as variáveis de ambiente
@@ -8,6 +8,26 @@ dotenv.config();
 
 const secretToken = process.env.JWT_SECRET; // Usa o segredo do JWT das variáveis de ambiente
 const saltRounds = 10;
+
+if (!secretToken) {
+  throw new Error("SECRET_TOKEN não definido no arquivo .env");
+}
+
+const loginEmployeeService = async (email, password) => {
+  try {
+    // Chama a função do repositório para autenticar o cliente
+    const result = await employeeRepository.loginEmployeeRepository(
+      email,
+      password
+    );
+
+    // Aqui você pode adicionar mais lógica, se necessário
+
+    return result; // Retorna o token e os dados do cliente
+  } catch (error) {
+    throw new Error(error.message); // Repassa o erro para o controlador
+  }
+};
 
 const createEmployee = async (
   name,
@@ -31,19 +51,21 @@ const createEmployee = async (
       is_admin
     );
 
-    // 3. Gerar o token JWT
-    const token = jwt.sign(
-      { id_employee: employee.id_employee, company_id },
-      secretToken,
-      { expiresIn: "7d" }
-    );
+    if (!employee) {
+      throw new Error("Falha ao criar funcionário");
+    }
+
+    // 3. Gerar o token JWT com o id_employee gerado
+    //   const token = jwt.createJWTEmployee(employee.employee, secretToken, {
+    //    expiresIn: "7d",
+    //   });
 
     // 4. Retornar o funcionário criado e o token
-    return { employee, token };
+    return employee;
   } catch (err) {
     console.error("Erro ao criar funcionário:", err);
     throw new Error("Erro ao criar funcionário");
   }
 };
 
-export default { createEmployee };
+export default { createEmployee, loginEmployeeService };
