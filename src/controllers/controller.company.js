@@ -13,17 +13,25 @@ const createCompanyAndEmployee = async (req, res) => {
 
   try {
     // Passa os dados para o serviço
-    await serviceCompany.createCompanyAndEmployee(
+    const result = await serviceCompany.createCompanyAndEmployee(
       name,
       email,
       password,
       is_admin
     );
 
-    return res
-      .status(201)
-      .json({ message: "Empresa e funcionário criados com sucesso!" });
+    // Retorna a mensagem e o token
+    return res.status(201).json({
+      message: result.message,
+      token: result.token,
+    });
   } catch (error) {
+    // Verifica mensagens de erro conhecidas
+    if (error.message.includes("já existe")) {
+      return res.status(409).json({ message: error.message }); // Status 409 = Conflito
+    }
+
+    // Erro genérico
     return res.status(500).json({
       message: "Erro ao criar empresa e funcionário",
       error: error.message,

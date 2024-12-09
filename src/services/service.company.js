@@ -10,22 +10,20 @@ const createCompanyAndEmployee = async (name, email, password, is_admin) => {
   });
 
   try {
-    // Hashear a senha
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Chama o método do repositório para criar a empresa e o funcionário
     const result = await repositoryCompany.createCompanyAndEmployee(
       name,
       email,
-      hashedPassword,
+      password,
       is_admin
     );
 
     return result;
   } catch (error) {
-    throw new Error("Erro ao criar empresa e funcionário: " + error.message);
+    throw new Error(error.message);
   }
 };
+
 export default {
   createCompanyAndEmployee,
 };
