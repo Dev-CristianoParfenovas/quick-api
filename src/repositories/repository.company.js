@@ -37,21 +37,22 @@ const createCompanyAndEmployee = async (name, email, password, is_admin) => {
 
     // Insere o funcionário na tabela `employees`
     const employeeResult = await pool.query(
-      `INSERT INTO employees (name, email, password, is_admin, company_id) VALUES ($1, $2, $3, $4, $5) RETURNING id_employee`,
+      `INSERT INTO employees (name, email, password, is_admin, company_id) VALUES ($1, $2, $3, $4, $5) RETURNING id_employee, name, email, is_admin`,
       [name, email, hashedPassword, is_admin, companyId]
     );
-    const employeeId = employeeResult.rows[0].id_employee;
+    const employee = employeeResult.rows[0]; // Aqui, estamos pegando os dados do funcionário
 
     // Gera o token JWT para o novo funcionário
-    const token = jwt.createJWTEmployee(employeeId);
+    const token = jwt.createJWTEmployee(employee.id_employee);
 
     // Confirma a transação
     await pool.query("COMMIT");
 
-    // Retorna a mensagem de sucesso junto com o token
+    // Retorna a mensagem de sucesso junto com o token e o objeto 'employee'
     return {
       message: "Empresa e funcionário criados com sucesso!",
       token,
+      employee, // Incluindo os dados do funcionário na resposta
     };
   } catch (error) {
     await pool.query("ROLLBACK");
