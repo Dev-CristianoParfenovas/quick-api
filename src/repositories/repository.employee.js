@@ -43,6 +43,7 @@ const loginEmployeeRepository = async (email, password) => {
 
   // Gerar o token JWT usando a função createJWT
   const token = jwt.createJWTEmployee(employee.id_employee);
+  const companyId = employee.company_id;
 
   return {
     token,
@@ -51,36 +52,42 @@ const loginEmployeeRepository = async (email, password) => {
       name: employee.name,
       email: employee.email,
       is_admin: employee.is_admin,
+      companyId, //company_id: employee.company_id,
     },
   };
 };
 
-const createEmployee = async (
-  name,
-  email,
-  phone,
-  password,
-  company_id,
-  is_admin
-) => {
+const createEmployee = async (name, email, phone, password, company_id) => {
   try {
-    const checkQuery = `SELECT * FROM employees WHERE email = $1;`;
-    const checkValues = [email];
+    const checkQuery = `SELECT * FROM employees WHERE email = $1 AND company_id = $2;`;
+    const checkValues = [email, company_id]; // Verifica também pelo company_id
     const checkResult = await pool.query(checkQuery, checkValues);
 
     // Gerar o hash da senha
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, 10);
     console.log("Senha hasheada:", hashedPassword);
+
+    // Define phone como null se não for fornecido
+    const phoneValue = phone || null;
+    const companiId = company_id;
+    console.log("ID EMPRESA:", companiId);
 
     if (checkResult.rows.length > 0) {
       // Atualizar funcionário existente
       const updateQuery = `
         UPDATE employees 
         SET name = $1, phone = $2, password = $3, is_admin = $4
-        WHERE email = $5 
+        WHERE email = $5 AND company_id = $6 
         RETURNING *;
       `;
-      const updateValues = [name, phone, password, is_admin, email];
+      const updateValues = [
+        name,
+        phoneValue,
+        hashedPassword, // Use a senha hasheada ao atualizar
+        false, // Sempre define is_admin como false
+        email,
+        companiId, //company_id,
+      ];
       const updateResult = await pool.query(updateQuery, updateValues);
 
       const updatedEmployee = updateResult.rows[0];
@@ -97,10 +104,10 @@ const createEmployee = async (
       const insertValues = [
         name,
         email,
-        phone,
-        password, //hashedPassword, // Senha hash gerada
-        company_id,
-        is_admin,
+        phoneValue,
+        hashedPassword, // Use a senha hasheada ao criar
+        companiId, //company_id,
+        false, // Sempre define is_admin como false
       ];
       const insertResult = await pool.query(insertQuery, insertValues);
 

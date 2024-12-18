@@ -12,20 +12,32 @@ const loginEmployeeController = async (req, res) => {
 };
 
 const createEmployee = async (req, res) => {
-  const { name, email, phone, password, company_id, is_admin } = req.body;
+  const { name, email, phone, password, company_id } = req.body; // is_admin removido
+
+  console.log("Dados recebidos no body:", req.body);
 
   try {
-    // Chama o serviço para criar o funcionário com criptografia e geração do token JWT
+    // Validações básicas dos campos obrigatórios
+    if (!name || !email || !password || !company_id) {
+      return res.status(400).json({
+        message:
+          "Os campos obrigatórios são: name, email, password, company_id.",
+      });
+    }
+
+    // Define phone como null caso não seja fornecido
+    const phoneValue = phone || null;
+
+    // Chama o serviço para criar o funcionário
     const employee = await EmployeeService.createEmployee(
       name,
       email,
-      phone,
+      phoneValue, // Passa o phone tratado
       password,
-      company_id,
-      is_admin
+      company_id
     );
 
-    // Retorna o novo funcionário e o token gerado ao cliente
+    // Retorna o novo funcionário ao cliente
     res.status(201).json({
       message: "Funcionário criado com sucesso.",
       employee,

@@ -29,42 +29,36 @@ const loginEmployeeService = async (email, password) => {
   }
 };
 
-const createEmployee = async (
-  name,
-  email,
-  phone,
-  password,
-  company_id,
-  is_admin
-) => {
+const createEmployee = async (name, email, phone, password, company_id) => {
   try {
-    // 1. Criptografar a senha
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    // 1. Garantir que is_admin seja sempre false
+    const is_admin = false;
 
-    // 2. Chama o repository para criar o funcionário com a senha criptografada
+    // 2. Criptografar a senha
+    // const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // 3. Define phone como null se não for fornecido
+    const phoneValue = phone || null;
+
+    // 3. Chamar o repositório para criar ou atualizar o funcionário
     const employee = await employeeRepository.createEmployee(
       name,
       email,
-      phone,
-      hashedPassword, // Passa a senha criptografada
+      phoneValue,
+      password, // Passa a senha criptografada
       company_id,
       is_admin
     );
 
     if (!employee) {
-      throw new Error("Falha ao criar funcionário");
+      throw new Error("Falha ao criar ou atualizar funcionário");
     }
 
-    // 3. Gerar o token JWT com o id_employee gerado
-    //   const token = jwt.createJWTEmployee(employee.employee, secretToken, {
-    //    expiresIn: "7d",
-    //   });
-
-    // 4. Retornar o funcionário criado e o token
+    // 4. Retornar o funcionário criado/atualizado
     return employee;
   } catch (err) {
-    console.error("Erro ao criar funcionário:", err);
-    throw new Error("Erro ao criar funcionário");
+    console.error("Erro ao criar ou atualizar funcionário:", err);
+    throw new Error("Erro ao criar ou atualizar funcionário");
   }
 };
 
