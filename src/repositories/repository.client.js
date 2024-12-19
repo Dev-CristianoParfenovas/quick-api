@@ -30,15 +30,25 @@ const loginClient = async (email, password) => {
   };
 };
 
+// Função para criar ou atualizar cliente
 const createClient = async (name, email, phone, password, company_id) => {
-  // Hash a senha antes de armazená-la no banco de dados
+  // Hash da senha antes de armazená-la no banco de dados
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const query = `
-            INSERT INTO clients (name, email, phone, password, company_id)
-            VALUES ($1, $2, $3, $4, $5) RETURNING *
-        `;
-  const values = [name, email, phone, hashedPassword, company_id]; // Use hashedPassword aqui
+INSERT INTO clients (name, email, phone, password, company_id)
+VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (email) 
+DO UPDATE SET 
+  name = EXCLUDED.name,
+  phone = EXCLUDED.phone,
+  password = EXCLUDED.password,
+  company_id = EXCLUDED.company_id,
+  updated_at = CURRENT_TIMESTAMP
+RETURNING *;
+  `;
+
+  const values = [name, email, phone, hashedPassword, company_id];
 
   const result = await pool.query(query, values);
   return result.rows[0];

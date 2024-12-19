@@ -6,6 +6,6 @@ const routerclient = Router();
 // Rota para login do cliente (POST)
 routerclient.post("/client/login", clientController.login);
 
-routerclient.post("/client", clientController.createClient);
+routerclient.post("/client", clientController.createOrUpdateClient);
 
 export default routerclient;

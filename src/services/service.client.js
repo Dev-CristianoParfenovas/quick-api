@@ -13,9 +13,9 @@ const loginClient = async (email, password) => {
   }
 };
 
+// Função para criar ou atualizar um cliente
 const createClient = async (name, email, phone, password, company_id) => {
   try {
-    // Lógica de negócio para criar o produto
     const client = await clientRepository.createClient(
       name,
       email,
@@ -23,9 +23,10 @@ const createClient = async (name, email, phone, password, company_id) => {
       password,
       company_id
     );
-    return client;
-  } catch (err) {
-    throw new Error("Erro ao criar produto");
+    return client; // Retorna o cliente criado ou atualizado
+  } catch (error) {
+    console.error("Error creating/updating client:", error);
+    throw error; // Lança o erro para ser tratado no Controller
   }
 };
 export default { createClient, loginClient };

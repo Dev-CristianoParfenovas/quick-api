@@ -11,10 +11,11 @@ const login = async (req, res) => {
   }
 };
 
-const createClient = async (req, res) => {
+// Função para lidar com a criação ou atualização de um cliente
+const createOrUpdateClient = async (req, res) => {
   const { name, email, phone, password, company_id } = req.body;
+
   try {
-    // Chamando o serviço de produto para criar um produto
     const client = await serviceClient.createClient(
       name,
       email,
@@ -22,10 +23,18 @@ const createClient = async (req, res) => {
       password,
       company_id
     );
-    res.status(201).json(client);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    return res.status(201).json({
+      message: "Cliente criado ou atualizado com sucesso.",
+      client,
+    });
+  } catch (error) {
+    console.error("Error in controller:", error);
+    return res.status(500).json({
+      message: "Erro ao criar ou atualizar o cliente.",
+      error: error.message,
+    });
   }
 };
 
-export default { createClient, login };
+export default { createOrUpdateClient, login };
