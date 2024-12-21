@@ -13,6 +13,17 @@ const loginClient = async (email, password) => {
   }
 };
 
+const getClientsByCompany = async (company_id) => {
+  if (!company_id) {
+    throw new Error("O ID da empresa é obrigatório.");
+  }
+
+  const clients = await clientRepository.getClientsByCompany(company_id);
+
+  // Apenas retorna os clientes (pode ser um array vazio)
+  return clients;
+};
+
 // Função para criar ou atualizar um cliente
 const createClient = async (name, email, phone, password, company_id) => {
   try {
@@ -29,4 +40,4 @@ const createClient = async (name, email, phone, password, company_id) => {
     throw error; // Lança o erro para ser tratado no Controller
   }
 };
-export default { createClient, loginClient };
+export default { createClient, loginClient, getClientsByCompany };

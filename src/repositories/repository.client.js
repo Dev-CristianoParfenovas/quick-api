@@ -30,6 +30,26 @@ const loginClient = async (email, password) => {
   };
 };
 
+const getClientsByCompany = async (company_id) => {
+  try {
+    console.log(
+      "Recebendo request para buscar clientes da empresa:",
+      company_id
+    );
+
+    const query = `SELECT * FROM clients WHERE company_id = $1`;
+    const values = [company_id];
+    const result = await pool.query(query, values);
+
+    console.log("Resultado da consulta:", result.rows);
+
+    return result.rows; // Retorna o array de clientes (vazio se não encontrar)
+  } catch (error) {
+    console.error("Erro ao buscar clientes no repositório:", error.message);
+    throw new Error("Erro ao buscar clientes no banco de dados.");
+  }
+};
+
 // Função para criar ou atualizar cliente
 const createClient = async (name, email, phone, password, company_id) => {
   // Hash da senha antes de armazená-la no banco de dados
@@ -57,4 +77,5 @@ RETURNING *;
 export default {
   createClient,
   loginClient,
+  getClientsByCompany,
 };
