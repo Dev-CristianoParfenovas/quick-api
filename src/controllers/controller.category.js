@@ -39,22 +39,52 @@ const getCategoryByIdAndCompanyIdController = async (req, res) => {
 
 //Tras todas as categorias do id company
 const getCategoriesByCompanyIdController = async (req, res) => {
-  const company_id = parseInt(req.params.company_id, 10);
+  const { company_id } = req.params;
 
-  if (isNaN(company_id)) {
-    console.error("Erro: company_id não é um número válido");
-    return res.status(400).json({ message: "ID da empresa inválido" });
-  }
+  console.log("company_id recebido no controlador:", company_id);
 
   try {
     const categories = await categoryService.getCategoriesByCompanyIdService(
       company_id
     );
+
+    if (categories.length === 0) {
+      // Retorna status 200 com mensagem informativa
+      console.log(`Nenhuma categoria encontrada para a empresa ${company_id}`);
+      return res.status(200).json({
+        message: "Nenhuma categoria cadastrada no momento.",
+        data: [], // Array vazio para consistência
+      });
+    }
+
+    // Retorna os clientes encontrados
+    res.status(200).json({ data: categories });
+  } catch (error) {
+    console.error("Erro ao buscar categorias no controlador:", error.message);
+    res
+      .status(500)
+      .json({
+        error: "Erro ao buscar categorias. Tente novamente mais tarde.",
+      });
+  }
+  /*  try {
+    const companyId = req.params.company_id;
+    console.log("Buscando categorias para company_id:", companyId);
+
+    const categories = await Category.find({
+      where: { company_id: companyId },
+    });
+    console.log("Categorias encontradas:", categories);
+
+    if (categories.length === 0) {
+      return res.status(404).json({ message: "Categoria não encontrada" });
+    }
+
     return res.status(200).json(categories);
   } catch (error) {
-    console.error("Erro ao obter categoria:", error);
-    return res.status(500).json({ message: "Erro ao obter categoria" });
-  }
+    console.error("Erro ao buscar categorias:", error);
+    return res.status(500).json({ message: "Erro interno do servidor" });
+  }*/
 };
 
 const updateCategoryController = async (req, res) => {

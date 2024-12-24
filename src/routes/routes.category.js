@@ -4,16 +4,21 @@ import jwt from "../jwt/token.js";
 
 const routercategory = Router();
 
-routercategory.post("/categories", categoryController.createCategoryController); // Criar uma nova categoria
+// Criar uma nova categoria
+routercategory.post(
+  "/categories",
+  jwt.validateJWT,
+  categoryController.createCategoryController
+);
 
-// Rota para buscar categoria por ID e company_id
+// Buscar uma categoria por ID e company_id
 routercategory.get(
-  "/categories/:id/:company_id",
+  "/categories/:category_id/:company_id",
   jwt.validateJWT,
   categoryController.getCategoryByIdAndCompanyIdController
 );
 
-// Rota para listar todas as categorias de uma empresa
+// Listar todas as categorias de uma empresa
 routercategory.get(
   "/categories/:company_id",
   jwt.validateJWT,
@@ -27,10 +32,11 @@ routercategory.put(
   categoryController.updateCategoryController
 );
 
+// Deletar categoria
 routercategory.delete(
   "/categories/:category_id",
   jwt.validateJWT,
   categoryController.deleteCategoryController
-); // Deletar categoria
+);
 
 export default routercategory;

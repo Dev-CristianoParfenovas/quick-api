@@ -26,18 +26,31 @@ const getCategoriesByCompanyId = async (company_id) => {
   console.log("company_id recebido no repositório:", company_id); // Confirmação do ID no repositório
   console.log("Tipo de company_id no repositório:", typeof company_id); // Confirmação do tipo
 
-  const query = `
-    SELECT * FROM categories
-    WHERE company_id = $1
-  `;
-
   try {
+    console.log(
+      "Recebendo request para buscar categorias da empresa:",
+      company_id
+    );
+
+    const query = `SELECT * FROM categories WHERE company_id = $1`;
+    const values = [company_id];
+    const result = await pool.query(query, values);
+
+    console.log("Resultado da consulta:", result.rows);
+
+    return result.rows; // Retorna o array de clientes (vazio se não encontrar)
+  } catch (error) {
+    console.error("Erro ao buscar clientes no repositório:", error.message);
+    throw new Error("Erro ao buscar clientes no banco de dados.");
+  }
+
+  /*try {
     const result = await pool.query(query, [company_id]);
     return result.rows;
   } catch (error) {
     console.error("Erro ao obter categorias no repositório:", error);
     throw error;
-  }
+  }*/
 };
 
 const updateCategory = async (category_id, name, company_id) => {

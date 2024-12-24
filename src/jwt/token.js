@@ -24,6 +24,8 @@ function createJWTEmployee(id_employee) {
 function validateJWT(req, res, next) {
   const authToken = req.headers.authorization;
 
+  console.log("Cabeçalho Authorization:", authToken);
+
   if (!authToken) {
     return res.status(401).send({ error: "Token não informado" });
   }
