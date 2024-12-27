@@ -1,31 +1,127 @@
 import pool from "../db/connection.js";
 
-//TRAS O PRODUTO(SELECT)
+// Função para obter os produtos de uma empresa
 const getProductsByClient = async (company_id) => {
-  const query = `SELECT p.*, COALESCE(s.quantity, 0) AS quantity
+  const query = `
+    SELECT p.*, COALESCE(s.quantity, 0) AS quantity
     FROM products p
     LEFT JOIN stock s ON p.id = s.product_id
-    WHERE p.company_id = $1`;
+    WHERE p.company_id = $1
+  `;
   const values = [company_id];
 
   try {
     const result = await pool.query(query, values);
-
     return result.rows.length ? result.rows : null;
-
-    // Verifica se há produtos
-    // if (result.rows.length === 0) {
-    //   return null; // Retorna null se não houver produtos
-    // }
-
-    //return result.rows; // Retorna o array de produtos
   } catch (error) {
     console.error("Erro ao buscar produtos: ", error);
     throw new Error("Erro ao buscar produtos");
   }
 };
 
-//INSERE PRODUTO E ESTOQUE
+// Função para verificar duplicidade
+const findProductByNameAndCompany = async (name, company_id) => {
+  const query = `
+    SELECT * FROM products 
+    WHERE name = $1 AND company_id = $2
+  `;
+  const values = [name, company_id];
+  const result = await pool.query(query, values);
+  console.log("Resultado da consulta de duplicidade:", result.rows); // Log adicional
+  return result.rows[0]; // Retorna o produto encontrado ou undefined
+};
+
+const upsertProductAndStock = async (
+  name,
+  category_id,
+  price,
+  company_id,
+  stockQuantity
+) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Verifica se o produto já existe
+    const findProductQuery = `
+      SELECT * FROM products
+      WHERE name = $1 AND company_id = $2
+    `;
+    const productResult = await client.query(findProductQuery, [
+      name,
+      company_id,
+    ]);
+    const existingProduct = productResult.rows[0];
+
+    if (existingProduct) {
+      // Atualizar produto existente
+      const updateProductQuery = `
+        UPDATE products
+        SET category_id = $1, price = $2
+        WHERE id = $3
+        RETURNING *
+      `;
+      const updatedProduct = await client.query(updateProductQuery, [
+        category_id,
+        price,
+        existingProduct.id,
+      ]);
+
+      // Atualizar estoque existente
+      const updateStockQuery = `
+        UPDATE stock
+        SET quantity = $1
+        WHERE product_id = $2 AND company_id = $3
+        RETURNING *
+      `;
+      const updatedStock = await client.query(updateStockQuery, [
+        stockQuantity,
+        existingProduct.id,
+        company_id,
+      ]);
+
+      await client.query("COMMIT");
+      return { product: updatedProduct.rows[0], stock: updatedStock.rows[0] };
+    }
+
+    // Criar novo produto
+    const insertProductQuery = `
+      INSERT INTO products (name, category_id, price, company_id)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `;
+    const newProduct = await client.query(insertProductQuery, [
+      name,
+      category_id,
+      price,
+      company_id,
+    ]);
+
+    // Criar estoque para o novo produto
+    const insertStockQuery = `
+      INSERT INTO stock (product_id, quantity, company_id)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `;
+    const newStock = await client.query(insertStockQuery, [
+      newProduct.rows[0].id,
+      stockQuantity,
+      company_id,
+    ]);
+
+    await client.query("COMMIT");
+    return { product: newProduct.rows[0], stock: newStock.rows[0] };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Erro ao criar ou atualizar produto e estoque: ", err);
+    throw new Error("Erro ao criar ou atualizar produto e estoque.");
+  } finally {
+    client.release();
+  }
+};
+
+/*
 const createProduct = async (
   name,
   category_id,
@@ -33,11 +129,17 @@ const createProduct = async (
   company_id,
   initialStock = 0
 ) => {
-  const client = await pool.connect(); // Conectar ao pool para iniciar a transação
+  const client = await pool.connect();
 
   try {
-    // Iniciar transação
     await client.query("BEGIN");
+
+    // Verificar duplicidade antes de criar o produto
+    const existingProduct = await findProductByNameAndCompany(name, company_id);
+    if (existingProduct) {
+      console.log("Produto duplicado encontrado:", existingProduct); // Log de duplicidade
+      throw new Error("Já existe um produto com este nome para esta empresa.");
+    }
 
     // Inserir produto
     const queryProduct = `
@@ -46,34 +148,33 @@ const createProduct = async (
     `;
     const valuesProduct = [name, category_id, price, company_id];
     const productResult = await client.query(queryProduct, valuesProduct);
-    const product = productResult.rows[0]; // Produto recém-criado
+    const product = productResult.rows[0];
 
-    // Inserir estoque associado ao produto
+    // Inserir estoque
     const queryStock = `
       INSERT INTO stock (product_id, quantity, company_id)
       VALUES ($1, $2, $3) RETURNING *
     `;
     const valuesStock = [product.id, initialStock, company_id];
     const stockResult = await client.query(queryStock, valuesStock);
-    const stock = stockResult.rows[0]; // Estoque recém-criado
 
-    // Confirmar transação
     await client.query("COMMIT");
-
-    // Retornar produto e estoque
-    return { product, stock };
+    return { product, stock: stockResult.rows[0] };
   } catch (err) {
-    // Se algo der errado, reverter a transação
     await client.query("ROLLBACK");
     console.error("Erro ao criar produto e estoque: ", err);
-    throw new Error("Erro ao criar produto e estoque");
+    if (
+      err.message === "Já existe um produto com este nome para esta empresa."
+    ) {
+      throw { status: 409, message: err.message }; // Retorna status 409 para duplicidade
+    }
+    throw new Error(err.message || "Erro ao criar produto e estoque");
   } finally {
-    // Liberar o cliente
     client.release();
   }
-};
+};*/
 
-//ALTERA PRODUTO E ESTOQUE
+// Função para atualizar produto e estoque
 const updateProductAndStock = async (
   product_id,
   name,
@@ -82,13 +183,12 @@ const updateProductAndStock = async (
   quantity,
   company_id
 ) => {
-  const client = await pool.connect(); // Conectar ao pool para iniciar a transação
+  const client = await pool.connect();
 
   try {
-    // Iniciar uma transação para garantir a integridade dos dados
     await client.query("BEGIN");
 
-    // Atualizar os detalhes do produto
+    // Atualizar produto
     const queryProduct = `
       UPDATE products
       SET name = $1, category_id = $2, price = $3
@@ -97,81 +197,60 @@ const updateProductAndStock = async (
     `;
     const valuesProduct = [name, category_id, price, product_id, company_id];
     const productResult = await client.query(queryProduct, valuesProduct);
+    const product = productResult.rows[0];
 
-    // Verificar se o produto foi encontrado e atualizado
-    if (productResult.rows.length === 0) {
-      await client.query("ROLLBACK");
-      console.error("Produto não encontrado para atualização");
-      return null; // Retorna null se o produto não existir para essa empresa
-    }
-
-    // Inserir ou atualizar o estoque
+    // Atualizar estoque
     const queryStock = `
-      INSERT INTO stock (product_id, quantity, company_id)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (product_id, company_id)
-      DO UPDATE SET quantity = $2
+      UPDATE stock
+      SET quantity = $1
+      WHERE product_id = $2 AND company_id = $3
       RETURNING *
     `;
-    const valuesStock = [product_id, quantity, company_id];
+    const valuesStock = [quantity, product_id, company_id];
     const stockResult = await client.query(queryStock, valuesStock);
 
-    // Confirmar a transação se ambas as operações foram bem-sucedidas
     await client.query("COMMIT");
-
-    // Retornar o produto atualizado e o estoque
-    return { product: productResult.rows[0], stock: stockResult.rows[0] };
-  } catch (error) {
-    // Reverter a transação em caso de erro
+    return { product, stock };
+  } catch (err) {
     await client.query("ROLLBACK");
-    console.error(
-      "Erro ao atualizar produto e estoque: ",
-      error.message,
-      error.stack
-    );
+    console.error("Erro ao atualizar produto e estoque: ", err);
     throw new Error("Erro ao atualizar produto e estoque");
   } finally {
-    // Liberar o cliente
     client.release();
   }
 };
 
-//DELETA PRODUTO
-const deleteProduct = async (product_id, company_id) => {
+// Função para excluir produto e seu estoque
+const deleteProductAndStock = async (product_id, company_id) => {
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    // Primeiro, excluir o estoque associado ao produto
-    const deleteStockQuery = `
+    // Excluir estoque
+    const queryStock = `
       DELETE FROM stock
       WHERE product_id = $1 AND company_id = $2
+      RETURNING *
     `;
-    await client.query(deleteStockQuery, [product_id, company_id]);
+    const valuesStock = [product_id, company_id];
+    await client.query(queryStock, valuesStock);
 
-    // Em seguida, excluir o produto
-    const deleteProductQuery = `
+    // Excluir produto
+    const queryProduct = `
       DELETE FROM products
       WHERE id = $1 AND company_id = $2
       RETURNING *
     `;
-    const result = await client.query(deleteProductQuery, [
-      product_id,
-      company_id,
-    ]);
-
-    if (result.rows.length === 0) {
-      await client.query("ROLLBACK");
-      return null; // Produto não encontrado
-    }
+    const valuesProduct = [product_id, company_id];
+    const productResult = await client.query(queryProduct, valuesProduct);
 
     await client.query("COMMIT");
-    return result.rows[0]; // Produto excluído com sucesso
-  } catch (error) {
+    return productResult.rows[0]; // Retorna o produto excluído
+  } catch (err) {
     await client.query("ROLLBACK");
-    console.error("Erro ao deletar produto e estoque:", error);
-    throw new Error("Erro ao deletar produto e estoque");
+    console.error("Erro ao excluir produto e estoque: ", err);
+    throw new Error("Erro ao excluir produto e estoque");
   } finally {
     client.release();
   }
@@ -179,7 +258,8 @@ const deleteProduct = async (product_id, company_id) => {
 
 export default {
   getProductsByClient,
-  createProduct,
-  updateProductAndStock, // substitui updateStock pela função combinada
-  deleteProduct,
+  upsertProductAndStock,
+  updateProductAndStock,
+  deleteProductAndStock,
+  findProductByNameAndCompany,
 };

@@ -11,7 +11,7 @@ const getProducts = async (req, res) => {
     const products = await serviceProducts.getProductsByClient(company_id);
 
     // Se não houver produtos, retornar uma resposta apropriada
-    if (!products) {
+    if (!products || products.length === 0) {
       return res
         .status(404)
         .json({ message: "Nenhum produto encontrado para este company_id" });
@@ -19,30 +19,80 @@ const getProducts = async (req, res) => {
 
     res.status(200).json(products); // Retorna a lista de produtos
   } catch (err) {
+    console.error("Erro ao buscar produtos:", err.message);
     res.status(500).json({ error: err.message });
   }
 };
 
-// Criar um produto
-const createProduct = async (req, res) => {
-  const { name, category_id, price, company_id, initialStock } = req.body;
+const createOrUpdateProduct = async (req, res) => {
+  const { name, category_id, price, company_id, stock } = req.body;
 
   try {
-    // Chama o serviço para criar o produto e o estoque
-    const { product, stock } = await serviceProducts.createProduct(
+    const result = await serviceProducts.upsertProduct({
       name,
       category_id,
       price,
       company_id,
-      initialStock
-    );
+      stock,
+    });
 
-    // Retorna o produto e o estoque criado como resposta
-    res.status(201).json({ product, stock });
+    return res.status(200).json({
+      message: "Produto criado ou atualizado com sucesso.",
+      data: result,
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Erro ao criar ou atualizar produto: ", err);
+    return res.status(500).json({
+      message: "Erro ao criar ou atualizar produto.",
+      error: err.message,
+    });
   }
 };
+
+// Criar um produto
+/*const createProduct = async (req, res) => {
+  try {
+    const { name, category_id, price, company_id, stock } = req.body;
+
+    // Verificar se todos os campos obrigatórios foram enviados
+    if (!name || !category_id || !price || !company_id || stock === undefined) {
+      return res.status(400).json({
+        message: "Todos os campos obrigatórios devem ser preenchidos.",
+      });
+    }
+
+    // Criar o produto e o estoque
+    const { product, stock: createdStock } =
+      await serviceProducts.createProduct({
+        name,
+        category_id,
+        price,
+        company_id,
+        initialStock: stock,
+      });
+
+    return res.status(201).json({
+      message: "Produto criado com sucesso!",
+      product,
+      stock: createdStock,
+    });
+  } catch (error) {
+    console.error("Erro ao criar produto:", error.message);
+
+    // Se o erro for sobre duplicidade, retorna erro 400
+    if (
+      error.message === "Já existe um produto com este nome para esta empresa."
+    ) {
+      return res.status(400).json({
+        message: error.message,
+      });
+    }
+
+    return res
+      .status(500)
+      .json({ message: "Erro interno no servidor. " + error.message });
+  }
+};*/
 
 export const updateProductAndStockController = async (req, res) => {
   const { product_id } = req.params;
@@ -120,14 +170,14 @@ const deleteProductController = async (req, res) => {
       product: deletedProduct,
     });
   } catch (error) {
-    console.error("Erro no controlador ao deletar produto:", error);
+    console.error("Erro no controlador ao deletar produto:", error.message);
     res.status(500).json({ error: "Erro ao excluir produto" });
   }
 };
 
 export default {
   getProducts,
-  createProduct,
+  createOrUpdateProduct,
   updateProductAndStockController,
   deleteProductController,
 };
