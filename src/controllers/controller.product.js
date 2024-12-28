@@ -25,10 +25,11 @@ const getProducts = async (req, res) => {
 };
 
 const createOrUpdateProduct = async (req, res) => {
-  const { name, category_id, price, company_id, stock } = req.body;
+  const { id, name, category_id, price, company_id, stock } = req.body;
 
   try {
     const result = await serviceProducts.upsertProduct({
+      id, // Passa o id para o serviço
       name,
       category_id,
       price,
@@ -156,13 +157,13 @@ export const updateProductAndStockController = async (req, res) => {
 };
 
 const deleteProductController = async (req, res) => {
-  const { company_id } = req.params;
-  const { product_id } = req.body;
+  const { productId } = req.params; // Captura o productId da URL
+  const { companyId } = req.query; // Captura o companyId da query string
 
   try {
     const deletedProduct = await serviceProducts.deleteProductService(
-      product_id,
-      company_id
+      productId,
+      companyId
     );
 
     return res.status(200).json({

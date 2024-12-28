@@ -12,9 +12,8 @@ const getProductsByClient = async (company_id) => {
 };
 
 // Exemplo de como o serviço upsertProduct poderia ser estruturado
-// Exemplo de como o serviço upsertProduct poderia ser estruturado
 const upsertProduct = async (productData) => {
-  const { name, category_id, price, company_id, stock } = productData;
+  const { id, name, category_id, price, company_id, stock } = productData;
 
   if (!name || !category_id || !price || !company_id || stock == null) {
     throw new Error("Todos os campos são obrigatórios.");
@@ -22,6 +21,7 @@ const upsertProduct = async (productData) => {
 
   try {
     const result = await productRepository.upsertProductAndStock(
+      id, // Agora passamos o ID, que pode ser `undefined` se for um novo produto
       name,
       category_id,
       price,
@@ -122,7 +122,7 @@ export const updateProductAndStockService = async (
 
 const deleteProductService = async (product_id, company_id) => {
   try {
-    const deletedProduct = await productRepository.deleteProduct(
+    const deletedProduct = await productRepository.deleteProductAndStock(
       product_id,
       company_id
     );

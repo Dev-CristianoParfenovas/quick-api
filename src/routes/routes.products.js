@@ -27,7 +27,7 @@ routerproduct.put(
 
 // Rota para excluir um produto e seu estoque
 routerproduct.delete(
-  "/products",
+  "/products/:productId",
   jwt.validateJWT,
   productController.deleteProductController
 );
