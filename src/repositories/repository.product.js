@@ -1,14 +1,15 @@
 import pool from "../db/connection.js";
 
 // Função para obter os produtos de uma empresa
-const getProductsByClient = async (company_id) => {
+const getProductsByClient = async (company_id, search = "") => {
   const query = `
     SELECT p.*, COALESCE(s.quantity, 0) AS quantity
     FROM products p
     LEFT JOIN stock s ON p.id = s.product_id
     WHERE p.company_id = $1
+    AND p.name ILIKE $2  -- ILIKE para busca não sensível a maiúsculas/minúsculas
   `;
-  const values = [company_id];
+  const values = [company_id, `%${search}%`]; // Envolva o termo de busca com % para buscar qualquer parte do nome
 
   try {
     const result = await pool.query(query, values);
@@ -32,7 +33,237 @@ const findProductByNameAndCompany = async (name, company_id) => {
 };
 
 //grava e altera produto
+
 const upsertProductAndStock = async (
+  id,
+  name,
+  category_id,
+  price,
+  company_id,
+  stockQuantity
+) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    let productResponse, stockResponse;
+
+    if (id) {
+      // Verifica se o produto existe com o ID fornecido
+      const findProductQuery = `
+        SELECT * FROM products
+        WHERE id = $1 AND company_id = $2
+      `;
+      const productResult = await client.query(findProductQuery, [
+        id,
+        company_id,
+      ]);
+
+      if (productResult.rows.length > 0) {
+        // Atualiza o produto existente
+        const updateProductQuery = `
+          UPDATE products
+          SET name = $1, category_id = $2, price = $3
+          WHERE id = $4 AND company_id = $5
+          RETURNING *
+        `;
+        productResponse = await client.query(updateProductQuery, [
+          name,
+          category_id,
+          price,
+          id,
+          company_id,
+        ]);
+
+        // Atualiza o estoque correspondente
+        const updateStockQuery = `
+          UPDATE stock
+          SET quantity = $1
+          WHERE product_id = $2 AND company_id = $3
+          RETURNING *
+        `;
+        stockResponse = await client.query(updateStockQuery, [
+          stockQuantity,
+          id,
+          company_id,
+        ]);
+      } else {
+        throw new Error("Produto não encontrado para o ID fornecido.");
+      }
+    } else {
+      // Cria novo produto se o ID não for fornecido
+      const insertProductQuery = `
+        INSERT INTO products (name, category_id, price, company_id)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `;
+      productResponse = await client.query(insertProductQuery, [
+        name,
+        category_id,
+        price,
+        company_id,
+      ]);
+
+      // Verifique se o produto foi inserido corretamente
+      if (!productResponse.rows.length) {
+        throw new Error("Erro ao inserir o novo produto.");
+      }
+
+      const insertStockQuery = `
+        INSERT INTO stock (product_id, quantity, company_id)
+        VALUES ($1, $2, $3)
+        RETURNING *
+      `;
+      stockResponse = await client.query(insertStockQuery, [
+        productResponse.rows[0].id,
+        stockQuantity,
+        company_id,
+      ]);
+    }
+
+    // Seleciona todos os produtos com o produto atualizado primeiro
+    const fetchProductsQuery = `
+      SELECT p.*, s.quantity 
+      FROM products p
+      LEFT JOIN stock s ON p.id = s.product_id AND p.company_id = s.company_id
+      WHERE p.company_id = $1
+      ORDER BY p.id = $2 DESC, p.id
+    `;
+    const allProducts = await client.query(fetchProductsQuery, [
+      company_id,
+      productResponse.rows[0].id,
+    ]);
+
+    await client.query("COMMIT");
+
+    return {
+      updatedProduct: productResponse.rows[0],
+      updatedStock: stockResponse.rows[0],
+      products: allProducts.rows,
+    };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Erro ao criar ou atualizar produto e estoque: ", err);
+    throw new Error("Erro ao criar ou atualizar produto e estoque.");
+  } finally {
+    client.release();
+  }
+};
+
+/**const upsertProductAndStock = async (
+  id,
+  name,
+  category_id,
+  price,
+  company_id,
+  stockQuantity
+) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    let productResponse, stockResponse;
+
+    if (id) {
+      // Verifica se o produto existe com o ID fornecido
+      const findProductQuery = `
+        SELECT * FROM products
+        WHERE id = $1 AND company_id = $2
+      `;
+      const productResult = await client.query(findProductQuery, [
+        id,
+        company_id,
+      ]);
+
+      if (productResult.rows.length > 0) {
+        // Atualiza o produto existente
+        const updateProductQuery = `
+          UPDATE products
+          SET name = $1, category_id = $2, price = $3
+          WHERE id = $4 AND company_id = $5
+          RETURNING *
+        `;
+        productResponse = await client.query(updateProductQuery, [
+          name,
+          category_id,
+          price,
+          id,
+          company_id,
+        ]);
+
+        // Atualiza o estoque correspondente
+        const updateStockQuery = `
+          UPDATE stock
+          SET quantity = $1
+          WHERE product_id = $2 AND company_id = $3
+          RETURNING *
+        `;
+        stockResponse = await client.query(updateStockQuery, [
+          stockQuantity,
+          id,
+          company_id,
+        ]);
+      } else {
+        throw new Error("Produto não encontrado para o ID fornecido.");
+      }
+    } else {
+      // Cria novo produto se o ID não for fornecido
+      const insertProductQuery = `
+        INSERT INTO products (name, category_id, price, company_id)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `;
+      productResponse = await client.query(insertProductQuery, [
+        name,
+        category_id,
+        price,
+        company_id,
+      ]);
+
+      const insertStockQuery = `
+        INSERT INTO stock (product_id, quantity, company_id)
+        VALUES ($1, $2, $3)
+        RETURNING *
+      `;
+      stockResponse = await client.query(insertStockQuery, [
+        productResponse.rows[0].id,
+        stockQuantity,
+        company_id,
+      ]);
+    }
+
+    // Seleciona todos os produtos com o produto atualizado primeiro
+    const fetchProductsQuery = `
+      SELECT p.*, s.quantity 
+      FROM products p
+      LEFT JOIN stock s ON p.id = s.product_id AND p.company_id = s.company_id
+      WHERE p.company_id = $1
+      ORDER BY CASE WHEN p.id = $2 THEN 0 ELSE 1 END, p.id
+    `;
+    const allProducts = await client.query(fetchProductsQuery, [
+      company_id,
+      productResponse.rows[0].id,
+    ]);
+
+    await client.query("COMMIT");
+
+    return {
+      updatedProduct: productResponse.rows[0],
+      updatedStock: stockResponse.rows[0],
+      products: allProducts.rows,
+    };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Erro ao criar ou atualizar produto e estoque: ", err);
+    throw new Error("Erro ao criar ou atualizar produto e estoque.");
+  } finally {
+    client.release();
+  }
+};**/
+
+/*const upsertProductAndStock = async (
   id,
   name,
   category_id,
@@ -130,7 +361,7 @@ const upsertProductAndStock = async (
   } finally {
     client.release();
   }
-};
+};*/
 
 // Função para atualizar produto e estoque
 const updateProductAndStock = async (

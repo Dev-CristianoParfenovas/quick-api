@@ -1,9 +1,11 @@
 import productRepository from "../repositories/repository.product.js";
 
-const getProductsByClient = async (company_id) => {
+const getProductsByClient = async (company_id, search) => {
   try {
-    // Lógica de negócio e interação com o repositório
-    const products = await productRepository.getProductsByClient(company_id);
+    const products = await productRepository.getProductsByClient(
+      company_id,
+      search
+    );
     return products;
   } catch (err) {
     console.error("Erro no serviço de busca de produtos:", err);

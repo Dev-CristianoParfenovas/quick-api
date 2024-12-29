@@ -4,13 +4,17 @@ import { updateProductAndStockService } from "../services/service.products.js";
 // Obter todos os produtos de um cliente
 const getProducts = async (req, res) => {
   const { company_id } = req.params;
+  const { search } = req.query; // Pegando o parâmetro de pesquisa da query string
 
   console.log("Company ID recebido: ", company_id);
+  console.log("Search Term: ", search); // Verifique se o termo de busca está sendo passado corretamente
 
   try {
-    const products = await serviceProducts.getProductsByClient(company_id);
+    const products = await serviceProducts.getProductsByClient(
+      company_id,
+      search
+    );
 
-    // Se não houver produtos, retornar uma resposta apropriada
     if (!products || products.length === 0) {
       return res
         .status(404)
