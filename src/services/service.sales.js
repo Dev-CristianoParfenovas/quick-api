@@ -1,6 +1,9 @@
 import salesRepository from "../repositories/repository.sales.js";
 
 const createSaleService = async (saleData) => {
+  // Definindo um valor padrão de tipovenda (0) caso não seja fornecido
+  saleData.tipovenda = saleData.tipovenda || 0;
+
   return await salesRepository.createSale(saleData);
 };
 

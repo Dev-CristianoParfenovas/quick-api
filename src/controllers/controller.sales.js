@@ -5,6 +5,8 @@ const createSaleController = async (req, res) => {
     const saleData = {
       ...req.body,
       company_id: parseInt(req.params.company_id),
+      // Garantir que o tipovenda tenha valor 0 caso não seja informado
+      tipovenda: req.body.tipovenda || 0,
     };
     const sale = await salesService.createSaleService(saleData);
     res.status(201).json(sale);
