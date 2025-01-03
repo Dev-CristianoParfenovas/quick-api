@@ -1,18 +1,42 @@
 import salesService from "../services/service.sales.js";
 
 const createSaleController = async (req, res) => {
+  const { company_id } = req.params;
+  const {
+    product_id,
+    id_client,
+    employee_id,
+    quantity,
+    total_price,
+    sale_date,
+    tipovenda,
+  } = req.body;
+
   try {
+    // Preparando os dados para envio
     const saleData = {
-      ...req.body,
-      company_id: parseInt(req.params.company_id),
-      // Garantir que o tipovenda tenha valor 0 caso não seja informado
-      tipovenda: req.body.tipovenda || 0,
+      company_id,
+      product_id,
+      id_client,
+      employee_id,
+      quantity,
+      total_price,
+      sale_date,
+      tipovenda,
     };
-    const sale = await salesService.createSaleService(saleData);
-    res.status(201).json(sale);
+
+    // Chamando o serviço para criar a venda
+    const newSale = await salesService(saleData);
+
+    // Retorne a resposta de sucesso
+    res
+      .status(201)
+      .json({ message: "Venda criada com sucesso!", sale: newSale });
   } catch (error) {
-    console.error("Erro ao criar venda:", error);
-    res.status(500).json({ message: "Erro ao criar venda" });
+    console.error("Erro ao criar a venda:", error);
+    res
+      .status(500)
+      .json({ message: "Erro ao criar a venda", error: error.message });
   }
 };
 
