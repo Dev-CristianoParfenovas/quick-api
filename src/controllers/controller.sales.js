@@ -1,7 +1,7 @@
 import salesService from "../services/service.sales.js";
 
 const createSaleController = async (req, res) => {
-  const { company_id } = req.params;
+  const { company_id } = req.params; // company_id vem dos parâmetros da rota
   const {
     product_id,
     id_client,
@@ -12,23 +12,31 @@ const createSaleController = async (req, res) => {
     tipovenda,
   } = req.body;
 
+  console.log("Dados recebidos no backend:", req.body);
+
   try {
-    // Preparando os dados para envio
+    const parsedQuantity = Number(quantity);
+    console.log("Quantidade após conversão:", parsedQuantity);
+
+    if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+      return res.status(400).json({ message: "Quantidade inválida." });
+    }
+
     const saleData = {
-      company_id,
+      company_id, // Inclui o company_id vindo dos parâmetros
       product_id,
       id_client,
       employee_id,
-      quantity,
+      quantity: parsedQuantity,
       total_price,
-      sale_date,
-      tipovenda,
+      sale_date: sale_date || new Date(), // Define a data atual como padrão
+      tipovenda: tipovenda || 0, // Define 0 como padrão se não fornecido
     };
 
-    // Chamando o serviço para criar a venda
-    const newSale = await salesService(saleData);
+    console.log("Dados validados para salvar:", saleData);
 
-    // Retorne a resposta de sucesso
+    const newSale = await salesService.createSaleService(saleData);
+
     res
       .status(201)
       .json({ message: "Venda criada com sucesso!", sale: newSale });

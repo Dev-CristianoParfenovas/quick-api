@@ -16,6 +16,9 @@ const createSale = async (saleData) => {
     saleData.sale_date || new Date(),
     saleData.tipovenda || 0, // Se não informado, será 0
   ];
+
+  console.log("Valores para a consulta:", values); // Verifique os valores sendo passados
+
   const result = await pool.query(query, values);
   return result.rows[0];
 };
