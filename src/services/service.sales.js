@@ -2,13 +2,19 @@ import salesRepository from "../repositories/repository.sales.js";
 
 const createSaleService = async (saleData) => {
   // Validação de quantity
-  if (!saleData.quantity || saleData.quantity <= 0) {
-    throw new Error("Quantidade inválida.");
+  if (Array.isArray(saleData)) {
+    for (let sale of saleData) {
+      if (!sale.quantity || sale.quantity <= 0) {
+        throw new Error("Quantidade inválida.");
+      }
+    }
+  } else {
+    if (!saleData.quantity || saleData.quantity <= 0) {
+      throw new Error("Quantidade inválida.");
+    }
   }
 
-  // Definindo um valor padrão de tipovenda (0) caso não seja fornecido
-  saleData.tipovenda = saleData.tipovenda || 0;
-
+  // Chama o repositório para salvar as vendas no banco
   return await salesRepository.createSale(saleData);
 };
 

@@ -1,50 +1,32 @@
 import salesService from "../services/service.sales.js";
 
 const createSaleController = async (req, res) => {
-  const { company_id } = req.params; // company_id vem dos parâmetros da rota
-  const {
-    product_id,
-    id_client,
-    employee_id,
-    quantity,
-    total_price,
-    sale_date,
-    tipovenda,
-  } = req.body;
-
-  console.log("Dados recebidos no backend:", req.body);
+  // Garantindo que o corpo da requisição seja tratado como array
+  const body = Array.isArray(req.body) ? req.body : [req.body];
 
   try {
-    const parsedQuantity = Number(quantity);
-    console.log("Quantidade após conversão:", parsedQuantity);
+    // Validação das quantidades de todos os itens, caso seja um array
+    body.forEach((sale) => {
+      const parsedQuantity = Number(sale.quantity);
+      if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+        throw new Error("Quantidade inválida.");
+      }
+      sale.quantity = parsedQuantity; // Garantindo que a quantidade seja um número
+    });
 
-    if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
-      return res.status(400).json({ message: "Quantidade inválida." });
-    }
+    // Chamando o serviço para criar as vendas
+    const newSales = await salesService.createSaleService(body);
 
-    const saleData = {
-      company_id, // Inclui o company_id vindo dos parâmetros
-      product_id,
-      id_client,
-      employee_id,
-      quantity: parsedQuantity,
-      total_price,
-      sale_date: sale_date || new Date(), // Define a data atual como padrão
-      tipovenda: tipovenda || 0, // Define 0 como padrão se não fornecido
-    };
-
-    console.log("Dados validados para salvar:", saleData);
-
-    const newSale = await salesService.createSaleService(saleData);
-
-    res
-      .status(201)
-      .json({ message: "Venda criada com sucesso!", sale: newSale });
+    res.status(201).json({
+      message: "Venda(s) criada(s) com sucesso!",
+      sales: newSales,
+    });
   } catch (error) {
-    console.error("Erro ao criar a venda:", error);
-    res
-      .status(500)
-      .json({ message: "Erro ao criar a venda", error: error.message });
+    console.error("Erro ao criar venda:", error);
+    res.status(500).json({
+      message: "Erro ao criar venda",
+      error: error.message,
+    });
   }
 };
 
