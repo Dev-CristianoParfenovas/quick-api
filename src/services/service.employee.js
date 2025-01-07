@@ -62,4 +62,20 @@ const createEmployee = async (name, email, phone, password, company_id) => {
   }
 };
 
-export default { createEmployee, loginEmployeeService };
+const getEmployeesByCompany = async (company_id) => {
+  try {
+    // Chama a função do repositório para obter os funcionários
+    const employees = await employeeRepository.getEmployeesByCompany(
+      company_id
+    );
+    return employees; // Retorna os funcionários
+  } catch (error) {
+    throw new Error(error.message); // Repassa o erro
+  }
+};
+
+export default {
+  createEmployee,
+  loginEmployeeService,
+  getEmployeesByCompany, // Nova função
+};

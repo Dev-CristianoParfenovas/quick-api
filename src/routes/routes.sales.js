@@ -19,6 +19,13 @@ routersales.get(
   jwt.validateJWT,
   salesController.getSaleByIdAndCompanyIdController
 );
+
+routersales.get(
+  "/sales",
+  jwt.validateJWT,
+  salesController.getSalesByDateRangeController
+);
+
 routersales.put(
   "/sales/:company_id/:id",
   jwt.validateJWT,

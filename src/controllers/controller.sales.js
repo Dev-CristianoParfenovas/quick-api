@@ -56,6 +56,38 @@ const getSaleByIdAndCompanyIdController = async (req, res) => {
   }
 };
 
+const getSalesByDateRangeController = async (req, res) => {
+  try {
+    const { startDate, endDate, employeeId } = req.query; // Certifique-se de que o employeeId seja extraído corretamente
+    const company_id = req.params.company_id;
+
+    console.log("Filtros aplicados:", { startDate, endDate, employeeId });
+
+    if (!startDate || !endDate) {
+      return res
+        .status(400)
+        .json({ message: "Datas inicial e final são obrigatórias." });
+    }
+
+    const sales = await salesService.getSalesByDateRangeService(
+      company_id,
+      startDate,
+      endDate,
+      employeeId // Passando employeeId, mesmo que seja undefined
+    );
+
+    res.status(200).json(sales);
+  } catch (error) {
+    console.error("Erro ao buscar vendas por intervalo de datas:", error);
+    res
+      .status(500)
+      .json({
+        message: "Erro ao buscar vendas por intervalo de datas",
+        error: error.message,
+      });
+  }
+};
+
 const updateSaleController = async (req, res) => {
   try {
     const { id, company_id } = req.params;
@@ -91,6 +123,7 @@ export default {
   createSaleController,
   getSalesByCompanyIdController,
   getSaleByIdAndCompanyIdController,
+  getSalesByDateRangeController,
   updateSaleController,
   deleteSaleController,
 };

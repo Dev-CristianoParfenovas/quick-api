@@ -10,4 +10,7 @@ routeremployee.post(
   employeeController.loginEmployeeController
 );
 
+// Rota para buscar os funcionários
+routeremployee.get("/employees/:company_id", employeeController.getEmployees);
+
 export default routeremployee;

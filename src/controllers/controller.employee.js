@@ -53,7 +53,19 @@ const createEmployee = async (req, res) => {
   }
 };
 
+const getEmployees = async (req, res) => {
+  const { company_id } = req.params; // Assume que o company_id será passado como parâmetro de rota
+  try {
+    const employees = await EmployeeService.getEmployeesByCompany(company_id);
+    res.status(200).json(employees); // Retorna a lista de funcionários
+  } catch (error) {
+    console.error("Erro ao buscar funcionários:", error.message);
+    res.status(400).json({ error: error.message });
+  }
+};
+
 export default {
   createEmployee,
   loginEmployeeController,
+  getEmployees, // Nova função
 };

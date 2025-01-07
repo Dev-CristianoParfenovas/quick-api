@@ -122,7 +122,23 @@ const createEmployee = async (name, email, phone, password, company_id) => {
   }
 };
 
+// repository.employee.js
+
+const getEmployeesByCompany = async (company_id) => {
+  const query = `SELECT * FROM employees WHERE company_id = $1`;
+  const values = [company_id];
+
+  const result = await pool.query(query, values);
+
+  if (result.rows.length === 0) {
+    throw new Error("Nenhum funcionário encontrado para essa empresa.");
+  }
+
+  return result.rows;
+};
+
 export default {
   createEmployee,
   loginEmployeeRepository,
+  getEmployeesByCompany, // Nova função
 };
