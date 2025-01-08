@@ -9,6 +9,13 @@ routersales.post(
   jwt.validateJWT,
   salesController.createSaleController
 );
+
+routersales.get(
+  "/sales/:company_id/date-range",
+  jwt.validateJWT,
+  salesController.getSalesByDateRangeController
+);
+
 routersales.get(
   "/sales/:company_id",
   jwt.validateJWT,
@@ -18,12 +25,6 @@ routersales.get(
   "/sales/:company_id/:id",
   jwt.validateJWT,
   salesController.getSaleByIdAndCompanyIdController
-);
-
-routersales.get(
-  "/sales",
-  jwt.validateJWT,
-  salesController.getSalesByDateRangeController
 );
 
 routersales.put(

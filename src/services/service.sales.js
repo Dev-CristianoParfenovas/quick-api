@@ -53,12 +53,40 @@ const getSaleByIdAndCompanyIdService = async (id, company_id) => {
   );
 };*/
 
+/*const getSalesByDateRangeService = async (
+  company_id,
+  startDate,
+  endDate,
+  employeeId
+) => {
+  // Adicione este log para verificar os parâmetros que estão sendo passados
+  console.log("Service - Parâmetros para o Repository:", {
+    company_id,
+    startDate,
+    endDate,
+    employeeId,
+  });
+
+  return await salesRepository.getSalesByDateRange(
+    company_id,
+    startDate,
+    endDate,
+    employeeId
+  );
+};*/
+
 const getSalesByDateRangeService = async (
   company_id,
   startDate,
   endDate,
   employeeId
 ) => {
+  console.log("Service - Parâmetros recebidos:", {
+    company_id,
+    startDate,
+    endDate,
+    employeeId,
+  });
   return await salesRepository.getSalesByDateRange(
     company_id,
     startDate,

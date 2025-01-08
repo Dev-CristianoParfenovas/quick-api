@@ -190,7 +190,7 @@ const getSaleByIdAndCompanyId = async (id, company_id) => {
   return result.rows;
 };*/
 
-const getSalesByDateRange = async (
+/*const getSalesByDateRange = async (
   company_id,
   startDate,
   endDate,
@@ -200,20 +200,53 @@ const getSalesByDateRange = async (
     SELECT id, sale_date, employee_id, total_price
     FROM sales
     WHERE company_id = $1
-    AND sale_date >= $2::timestamptz
-    AND sale_date <= $3::timestamptz
+    AND sale_date >= $2::TIMESTAMP AT TIME ZONE 'UTC'
+    AND sale_date <= $3::TIMESTAMP AT TIME ZONE 'UTC'
   `;
 
-  let params = [company_id, startDate, endDate];
+  const params = [company_id, startDate, endDate];
 
-  // Se employeeId for fornecido e não for "all", adiciona o filtro
   if (employeeId && employeeId !== "all") {
     query += " AND employee_id = $4";
-    params.push(employeeId); // Passando o employeeId como quarto parâmetro
+    params.push(employeeId);
   }
 
+  // Adicione este log para verificar a query e os parâmetros
+  console.log("Repository - Query Gerada e Parâmetros:", { query, params });
+
   const result = await pool.query(query, params);
+
+  // Adicione este log para verificar os resultados da query
+  console.log("Repository - Resultados da Query:", result.rows);
+
   return result.rows;
+};*/
+
+const getSalesByDateRange = async (
+  company_id,
+  startDate,
+  endDate,
+  employeeId
+) => {
+  try {
+    const query = `
+      SELECT * FROM sales
+      WHERE company_id = $1
+        AND sale_date BETWEEN $2 AND $3
+        ${employeeId ? "AND employee_id = $4" : ""}
+    `;
+    const params = [company_id, startDate, endDate];
+    if (employeeId) params.push(employeeId);
+
+    console.log("Repository - Query gerada:", query);
+    console.log("Repository - Parâmetros:", params);
+
+    const { rows } = await pool.query(query, params);
+    return rows;
+  } catch (error) {
+    console.error("Erro no Repository:", error);
+    throw error;
+  }
 };
 
 const updateSaleById = async (id, company_id, saleData) => {
