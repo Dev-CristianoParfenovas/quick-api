@@ -75,7 +75,7 @@ const getSaleByIdAndCompanyIdService = async (id, company_id) => {
   );
 };*/
 
-const getSalesByDateRangeService = async (
+/*const getSalesByDateRangeService = async (
   company_id,
   startDate,
   endDate,
@@ -92,6 +92,59 @@ const getSalesByDateRangeService = async (
     startDate,
     endDate,
     employeeId
+  );
+};*/
+
+/*const getSalesByDateRangeService = async (
+  company_id,
+  startDate,
+  endDate,
+  employeeId
+) => {
+  console.log("Service - Parâmetros recebidos:", {
+    company_id,
+    startDate,
+    endDate,
+    employeeId,
+  });
+
+  if (!startDate || !endDate) {
+    throw new Error("As datas de início e fim são obrigatórias.");
+  }
+
+  return await salesRepository.getSalesByDateRange(
+    company_id,
+    startDate,
+    endDate,
+    employeeId
+  );
+};*/
+
+const getSalesByDateRangeService = async (
+  company_id,
+  startDate,
+  endDate,
+  employee_id,
+  clientId
+) => {
+  console.log("Service - Parâmetros recebidos:", {
+    company_id,
+    startDate,
+    endDate,
+    employee_id,
+    clientId,
+  });
+
+  if (!startDate || !endDate) {
+    throw new Error("As datas de início e fim são obrigatórias.");
+  }
+
+  return await salesRepository.getSalesByDateRange(
+    company_id,
+    startDate,
+    endDate,
+    employee_id,
+    clientId
   );
 };
 

@@ -120,7 +120,7 @@ const getSaleByIdAndCompanyIdController = async (req, res) => {
   }
 };*/
 
-const getSalesByDateRangeController = async (req, res) => {
+/*const getSalesByDateRangeController = async (req, res) => {
   try {
     const { company_id } = req.params;
     const { startDate, endDate, employeeId } = req.query;
@@ -140,6 +140,76 @@ const getSalesByDateRangeController = async (req, res) => {
     );
 
     console.log("Vendas retornadas do serviço:", sales); // Verifique as vendas retornadas da API
+
+    res.status(200).json(sales);
+  } catch (error) {
+    console.error("Erro no Controller ao obter vendas:", error);
+    res.status(500).json({ error: "Erro ao obter vendas" });
+  }
+};*/
+
+/*const getSalesByDateRangeController = async (req, res) => {
+  try {
+    const { company_id } = req.params;
+    const { startDate, endDate, employeeId } = req.query;
+
+    console.log("Parâmetros recebidos no controller:", {
+      company_id,
+      startDate,
+      endDate,
+      employeeId,
+    });
+
+    if (!startDate || !endDate) {
+      return res
+        .status(400)
+        .json({ error: "Datas de início e fim são obrigatórias." });
+    }
+
+    const sales = await salesService.getSalesByDateRangeService(
+      company_id,
+      startDate,
+      endDate,
+      employeeId
+    );
+
+    console.log("Vendas retornadas do serviço:", sales);
+
+    res.status(200).json(sales);
+  } catch (error) {
+    console.error("Erro no Controller ao obter vendas:", error);
+    res.status(500).json({ error: "Erro ao obter vendas" });
+  }
+};*/
+
+const getSalesByDateRangeController = async (req, res) => {
+  try {
+    const { company_id } = req.params;
+    const { startDate, endDate, employeeId, clientId } = req.query;
+
+    console.log("Parâmetros recebidos no controller:", {
+      company_id,
+      startDate,
+      endDate,
+      employeeId,
+      clientId,
+    });
+
+    if (!startDate || !endDate) {
+      return res
+        .status(400)
+        .json({ error: "Datas de início e fim são obrigatórias." });
+    }
+
+    const sales = await salesService.getSalesByDateRangeService(
+      company_id,
+      startDate,
+      endDate,
+      employeeId,
+      clientId
+    );
+
+    console.log("Vendas retornadas do serviço:", sales);
 
     res.status(200).json(sales);
   } catch (error) {

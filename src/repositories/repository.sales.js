@@ -222,7 +222,7 @@ const getSaleByIdAndCompanyId = async (id, company_id) => {
   return result.rows;
 };*/
 
-const getSalesByDateRange = async (
+/*const getSalesByDateRange = async (
   company_id,
   startDate,
   endDate,
@@ -240,6 +240,66 @@ const getSalesByDateRange = async (
 
     console.log("Repository - Query gerada:", query);
     console.log("Repository - Parâmetros:", params);
+
+    const { rows } = await pool.query(query, params);
+    return rows;
+  } catch (error) {
+    console.error("Erro no Repository:", error);
+    throw error;
+  }
+};*/
+
+/*const getSalesByDateRange = async (
+  company_id,
+  startDate,
+  endDate,
+  employeeId
+) => {
+  try {
+    const query = `
+      SELECT * FROM sales
+      WHERE company_id = $1
+        AND sale_date BETWEEN $2 AND $3
+        ${employeeId ? "AND employee_id = $4" : ""}
+    `;
+    const params = [company_id, startDate, endDate];
+    if (employeeId) params.push(employeeId);
+
+    console.log("Repository - Query gerada:", query);
+    console.log("Repository - Parâmetros:", JSON.stringify(params));
+
+    const { rows } = await pool.query(query, params);
+    return rows;
+  } catch (error) {
+    console.error("Erro no Repository:", error);
+    throw error;
+  }
+};*/
+
+const getSalesByDateRange = async (
+  company_id,
+  startDate,
+  endDate,
+  employee_id,
+  id_client
+) => {
+  try {
+    const query = `
+      SELECT * FROM sales
+      WHERE company_id = $1
+      AND sale_date BETWEEN $2 AND $3
+      ${employee_id ? "AND employee_id = $4" : ""}
+      ${id_client ? `AND id_client = $${employee_id ? 5 : 4}` : ""}
+    `;
+
+    const params = [company_id, startDate, endDate];
+
+    // Adiciona os parâmetros de employeeId e id_client conforme necessário
+    if (employee_id) params.push(employee_id);
+    if (id_client) params.push(id_client);
+
+    console.log("Repository - Query gerada:", query);
+    console.log("Repository - Parâmetros:", JSON.stringify(params));
 
     const { rows } = await pool.query(query, params);
     return rows;
