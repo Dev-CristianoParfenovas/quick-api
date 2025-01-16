@@ -195,12 +195,23 @@ const getSalesByDateRangeController = async (req, res) => {
       clientId,
     });
 
+    // Verifique se as datas são fornecidas
     if (!startDate || !endDate) {
       return res
         .status(400)
-        .json({ error: "Datas de início e fim são obrigatórias." });
+        .json({ error: "As datas de início e fim são obrigatórias." });
     }
 
+    // Valide os IDs opcionais
+    if (employeeId && isNaN(parseInt(employeeId))) {
+      return res.status(400).json({ error: "employeeId inválido." });
+    }
+
+    if (clientId && isNaN(parseInt(clientId))) {
+      return res.status(400).json({ error: "clientId inválido." });
+    }
+
+    // Chame o serviço para obter as vendas com os filtros aplicados
     const sales = await salesService.getSalesByDateRangeService(
       company_id,
       startDate,
@@ -211,9 +222,21 @@ const getSalesByDateRangeController = async (req, res) => {
 
     console.log("Vendas retornadas do serviço:", sales);
 
+    // Retorne as vendas encontradas
     res.status(200).json(sales);
   } catch (error) {
     console.error("Erro no Controller ao obter vendas:", error);
+
+    // Diferencie erros de validação de erros internos
+    if (error.message.includes("obrigatórias")) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    if (error.message.includes("inválido")) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Caso contrário, retorne erro genérico de servidor
     res.status(500).json({ error: "Erro ao obter vendas" });
   }
 };

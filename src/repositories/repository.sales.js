@@ -178,95 +178,31 @@ const getSaleByIdAndCompanyId = async (id, company_id) => {
   return result.rows[0];
 };
 
-/*const getSalesByDateRange = async (company_id, startDate, endDate) => {
-  const query = `
-    SELECT id, sale_date, employee_id, total_price
-    FROM sales
-    WHERE company_id = $1
-    AND sale_date >= $2::timestamptz
-    AND sale_date <= $3::timestamptz
-  `;
-  const result = await pool.query(query, [company_id, startDate, endDate]);
-  return result.rows;
-};*/
-
 /*const getSalesByDateRange = async (
   company_id,
   startDate,
   endDate,
-  employeeId
-) => {
-  let query = `
-    SELECT id, sale_date, employee_id, total_price
-    FROM sales
-    WHERE company_id = $1
-    AND sale_date >= $2::TIMESTAMP AT TIME ZONE 'UTC'
-    AND sale_date <= $3::TIMESTAMP AT TIME ZONE 'UTC'
-  `;
-
-  const params = [company_id, startDate, endDate];
-
-  if (employeeId && employeeId !== "all") {
-    query += " AND employee_id = $4";
-    params.push(employeeId);
-  }
-
-  // Adicione este log para verificar a query e os parâmetros
-  console.log("Repository - Query Gerada e Parâmetros:", { query, params });
-
-  const result = await pool.query(query, params);
-
-  // Adicione este log para verificar os resultados da query
-  console.log("Repository - Resultados da Query:", result.rows);
-
-  return result.rows;
-};*/
-
-/*const getSalesByDateRange = async (
-  company_id,
-  startDate,
-  endDate,
-  employeeId
+  employee_id,
+  id_client
 ) => {
   try {
     const query = `
-      SELECT * FROM sales
-      WHERE company_id = $1
-        AND sale_date BETWEEN $2 AND $3
-        ${employeeId ? "AND employee_id = $4" : ""}
+      SELECT 
+        sales.*, 
+        clients.name AS client_name, 
+        employees.name AS employee_name 
+      FROM sales
+      LEFT JOIN clients ON sales.id_client = clients.id_client
+      LEFT JOIN employees ON sales.employee_id = employees.id_employee
+      WHERE sales.company_id = $1
+        AND sales.sale_date BETWEEN $2 AND $3
+        ${employee_id ? "AND sales.employee_id = $4" : ""}
+        ${id_client ? `AND sales.id_client = $${employee_id ? 5 : 4}` : ""}
     `;
+
     const params = [company_id, startDate, endDate];
-    if (employeeId) params.push(employeeId);
-
-    console.log("Repository - Query gerada:", query);
-    console.log("Repository - Parâmetros:", params);
-
-    const { rows } = await pool.query(query, params);
-    return rows;
-  } catch (error) {
-    console.error("Erro no Repository:", error);
-    throw error;
-  }
-};*/
-
-/*const getSalesByDateRange = async (
-  company_id,
-  startDate,
-  endDate,
-  employeeId
-) => {
-  try {
-    const query = `
-      SELECT * FROM sales
-      WHERE company_id = $1
-        AND sale_date BETWEEN $2 AND $3
-        ${employeeId ? "AND employee_id = $4" : ""}
-    `;
-    const params = [company_id, startDate, endDate];
-    if (employeeId) params.push(employeeId);
-
-    console.log("Repository - Query gerada:", query);
-    console.log("Repository - Parâmetros:", JSON.stringify(params));
+    if (employee_id) params.push(employee_id);
+    if (id_client) params.push(id_client);
 
     const { rows } = await pool.query(query, params);
     return rows;
@@ -280,26 +216,41 @@ const getSalesByDateRange = async (
   company_id,
   startDate,
   endDate,
-  employee_id,
-  id_client
+  employee_id = null,
+  id_client = null
 ) => {
   try {
-    const query = `
-      SELECT * FROM sales
-      WHERE company_id = $1
-      AND sale_date BETWEEN $2 AND $3
-      ${employee_id ? "AND employee_id = $4" : ""}
-      ${id_client ? `AND id_client = $${employee_id ? 5 : 4}` : ""}
+    // Certifique-se de que as datas estão no formato correto (Date ou string SQL)
+    const parsedStartDate = new Date(startDate);
+    const parsedEndDate = new Date(endDate);
+
+    if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+      throw new Error("Datas inválidas fornecidas.");
+    }
+
+    let query = `
+      SELECT 
+        sales.*, 
+        clients.name AS client_name, 
+        employees.name AS employee_name 
+      FROM sales
+      LEFT JOIN clients ON sales.id_client = clients.id_client
+      LEFT JOIN employees ON sales.employee_id = employees.id_employee
+      WHERE sales.company_id = $1
+      AND sales.sale_date BETWEEN $2 AND $3
     `;
 
-    const params = [company_id, startDate, endDate];
+    const params = [company_id, parsedStartDate, parsedEndDate];
 
-    // Adiciona os parâmetros de employeeId e id_client conforme necessário
-    if (employee_id) params.push(employee_id);
-    if (id_client) params.push(id_client);
+    if (employee_id) {
+      query += ` AND sales.employee_id = $${params.length + 1}`;
+      params.push(employee_id);
+    }
 
-    console.log("Repository - Query gerada:", query);
-    console.log("Repository - Parâmetros:", JSON.stringify(params));
+    if (id_client) {
+      query += ` AND sales.id_client = $${params.length + 1}`;
+      params.push(id_client);
+    }
 
     const { rows } = await pool.query(query, params);
     return rows;
