@@ -220,7 +220,6 @@ const getSalesByDateRange = async (
   id_client = null
 ) => {
   try {
-    // Certifique-se de que as datas estão no formato correto (Date ou string SQL)
     const parsedStartDate = new Date(startDate);
     const parsedEndDate = new Date(endDate);
 

@@ -135,12 +135,10 @@ const getSalesByDateRangeService = async (
     clientId,
   });
 
-  // Verifique se as datas são fornecidas
   if (!startDate || !endDate) {
     throw new Error("As datas de início e fim são obrigatórias.");
   }
 
-  // Converta as strings de datas para objetos Date
   const parsedStartDate = new Date(startDate);
   const parsedEndDate = new Date(endDate);
 
@@ -148,11 +146,9 @@ const getSalesByDateRangeService = async (
     throw new Error("Datas inválidas fornecidas.");
   }
 
-  // Certifique-se de que os IDs sejam válidos
   const parsedEmployeeId = employee_id ? parseInt(employee_id, 10) : null;
   const parsedClientId = clientId ? parseInt(clientId, 10) : null;
 
-  // Verifique se a conversão dos IDs foi bem-sucedida
   if (employee_id && isNaN(parsedEmployeeId)) {
     throw new Error("employeeId inválido.");
   }
@@ -161,7 +157,6 @@ const getSalesByDateRangeService = async (
     throw new Error("clientId inválido.");
   }
 
-  // Passe esses parâmetros para o repositório e aplique o filtro
   try {
     const sales = await salesRepository.getSalesByDateRange(
       company_id,
