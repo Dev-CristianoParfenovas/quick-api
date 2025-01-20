@@ -185,53 +185,28 @@ const getSaleByIdAndCompanyIdController = async (req, res) => {
 const getSalesByDateRangeController = async (req, res) => {
   try {
     const { company_id } = req.params;
-    const { startDate, endDate, employeeId, clientId } = req.query;
+    const { startDate, endDate, employee_id, client_id } = req.query;
 
     console.log("Parâmetros recebidos no controller:", {
       company_id,
       startDate,
       endDate,
-      employeeId,
-      clientId,
+      employeeId: employee_id,
+      clientId: client_id,
     });
 
-    if (!startDate || !endDate) {
-      return res
-        .status(400)
-        .json({ error: "As datas de início e fim são obrigatórias." });
-    }
-
-    if (employeeId && isNaN(parseInt(employeeId))) {
-      return res.status(400).json({ error: "employeeId inválido." });
-    }
-
-    if (clientId && isNaN(parseInt(clientId))) {
-      return res.status(400).json({ error: "clientId inválido." });
-    }
-
-    const sales = await salesService.getSalesByDateRangeService(
+    const sales = await salesService.getSalesByDateRangeService({
       company_id,
       startDate,
       endDate,
-      employeeId,
-      clientId
-    );
+      employee_id: employee_id || null,
+      client_id: client_id || null,
+    });
 
-    console.log("Vendas retornadas do serviço:", sales);
-
-    res.status(200).json(sales);
+    return res.status(200).json(sales);
   } catch (error) {
-    console.error("Erro no Controller ao obter vendas:", error);
-
-    if (error.message.includes("obrigatórias")) {
-      return res.status(400).json({ error: error.message });
-    }
-
-    if (error.message.includes("inválido")) {
-      return res.status(400).json({ error: error.message });
-    }
-
-    res.status(500).json({ error: "Erro ao obter vendas" });
+    console.error("Erro no controller:", error);
+    return res.status(500).json({ error: "Erro ao buscar vendas" });
   }
 };
 

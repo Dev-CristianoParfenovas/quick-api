@@ -178,85 +178,75 @@ const getSaleByIdAndCompanyId = async (id, company_id) => {
   return result.rows[0];
 };
 
-/*const getSalesByDateRange = async (
+/*const getSalesByDateRange = async ({
   company_id,
   startDate,
   endDate,
   employee_id,
-  id_client
-) => {
-  try {
-    const query = `
-      SELECT 
-        sales.*, 
-        clients.name AS client_name, 
-        employees.name AS employee_name 
-      FROM sales
-      LEFT JOIN clients ON sales.id_client = clients.id_client
-      LEFT JOIN employees ON sales.employee_id = employees.id_employee
-      WHERE sales.company_id = $1
-        AND sales.sale_date BETWEEN $2 AND $3
-        ${employee_id ? "AND sales.employee_id = $4" : ""}
-        ${id_client ? `AND sales.id_client = $${employee_id ? 5 : 4}` : ""}
-    `;
+  client_id,
+}) => {
+  const query = `
+    SELECT
+      sales.*,
+      clients.name AS client_name,
+      employees.name AS employee_name
+    FROM sales
+    LEFT JOIN clients ON sales.id_client = clients.id_client
+    LEFT JOIN employees ON sales.employee_id = employees.id_employee
+    WHERE sales.company_id = $1
+      AND sales.sale_date BETWEEN $2 AND $3
+      ${employee_id ? `AND sales.employee_id = $4` : ""}
+      ${client_id ? `AND sales.id_client = $5` : ""}
+  `;
 
-    const params = [company_id, startDate, endDate];
-    if (employee_id) params.push(employee_id);
-    if (id_client) params.push(id_client);
+  const values = [company_id, startDate, endDate];
+  if (employee_id) values.push(employee_id);
+  if (client_id) values.push(client_id);
 
-    const { rows } = await pool.query(query, params);
-    return rows;
-  } catch (error) {
-    console.error("Erro no Repository:", error);
-    throw error;
-  }
+  console.log("Query gerada no repositório:", query, values);
+
+  const { rows } = await pool.query(query, values);
+  return rows;
 };*/
 
-const getSalesByDateRange = async (
+const getSalesByDateRange = async ({
   company_id,
   startDate,
   endDate,
-  employee_id = null,
-  id_client = null
-) => {
-  try {
-    const parsedStartDate = new Date(startDate);
-    const parsedEndDate = new Date(endDate);
-
-    if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
-      throw new Error("Datas inválidas fornecidas.");
-    }
-
-    let query = `
-      SELECT 
-        sales.*, 
-        clients.name AS client_name, 
-        employees.name AS employee_name 
-      FROM sales
-      LEFT JOIN clients ON sales.id_client = clients.id_client
-      LEFT JOIN employees ON sales.employee_id = employees.id_employee
-      WHERE sales.company_id = $1
+  employee_id,
+  client_id,
+}) => {
+  // Inicializando a query com as condições básicas
+  let query = `
+    SELECT
+      sales.*,
+      clients.name AS client_name,
+      employees.name AS employee_name
+    FROM sales
+    LEFT JOIN clients ON sales.id_client = clients.id_client
+    LEFT JOIN employees ON sales.employee_id = employees.id_employee
+    WHERE sales.company_id = $1
       AND sales.sale_date BETWEEN $2 AND $3
-    `;
+  `;
 
-    const params = [company_id, parsedStartDate, parsedEndDate];
+  const values = [company_id, startDate, endDate];
 
-    if (employee_id) {
-      query += ` AND sales.employee_id = $${params.length + 1}`;
-      params.push(employee_id);
-    }
-
-    if (id_client) {
-      query += ` AND sales.id_client = $${params.length + 1}`;
-      params.push(id_client);
-    }
-
-    const { rows } = await pool.query(query, params);
-    return rows;
-  } catch (error) {
-    console.error("Erro no Repository:", error);
-    throw error;
+  // Condicional para o filtro de funcionário
+  if (employee_id) {
+    query += ` AND sales.employee_id = $${values.length + 1}`;
+    values.push(employee_id);
   }
+
+  // Condicional para o filtro de cliente
+  if (client_id) {
+    query += ` AND sales.id_client = $${values.length + 1}`;
+    values.push(client_id);
+  }
+
+  console.log("Query gerada no repositório:", query, values);
+
+  const { rows } = await pool.query(query, values);
+  return rows;
 };
 
 const updateSaleById = async (id, company_id, saleData) => {

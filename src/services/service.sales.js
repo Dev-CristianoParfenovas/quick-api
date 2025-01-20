@@ -120,55 +120,35 @@ const getSaleByIdAndCompanyIdService = async (id, company_id) => {
   );
 };*/
 
-const getSalesByDateRangeService = async (
+const getSalesByDateRangeService = async ({
   company_id,
   startDate,
   endDate,
   employee_id,
-  clientId
-) => {
+  client_id,
+}) => {
   console.log("Service - Parâmetros recebidos:", {
     company_id,
     startDate,
     endDate,
     employee_id,
-    clientId,
+    client_id,
   });
 
-  if (!startDate || !endDate) {
-    throw new Error("As datas de início e fim são obrigatórias.");
-  }
+  const employeeFilter = employee_id ? parseInt(employee_id, 10) : null;
+  console.log("Service - Employee ID processado:", employeeFilter);
 
-  const parsedStartDate = new Date(startDate);
-  const parsedEndDate = new Date(endDate);
+  const clientFilter = client_id ? parseInt(client_id, 10) : null;
 
-  if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
-    throw new Error("Datas inválidas fornecidas.");
-  }
+  const sales = await salesRepository.getSalesByDateRange({
+    company_id,
+    startDate,
+    endDate,
+    employee_id: employeeFilter,
+    client_id: clientFilter,
+  });
 
-  const parsedEmployeeId = employee_id ? parseInt(employee_id, 10) : null;
-  const parsedClientId = clientId ? parseInt(clientId, 10) : null;
-
-  if (employee_id && isNaN(parsedEmployeeId)) {
-    throw new Error("employeeId inválido.");
-  }
-
-  if (clientId && isNaN(parsedClientId)) {
-    throw new Error("clientId inválido.");
-  }
-
-  try {
-    const sales = await salesRepository.getSalesByDateRange(
-      company_id,
-      parsedStartDate,
-      parsedEndDate,
-      parsedEmployeeId,
-      parsedClientId
-    );
-    return sales;
-  } catch (error) {
-    throw new Error("Erro ao consultar vendas no repositório.");
-  }
+  return sales;
 };
 
 const updateSaleService = async (id, company_id, saleData) => {
