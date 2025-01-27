@@ -15,7 +15,18 @@ const getProductsByClient = async (company_id, search) => {
 
 // Exemplo de como o serviço upsertProduct poderia ser estruturado
 const upsertProduct = async (productData) => {
-  const { id, name, category_id, price, company_id, stock } = productData;
+  const {
+    id,
+    name,
+    category_id,
+    price,
+    company_id,
+    stock,
+    barcode,
+    ncm,
+    aliquota,
+    cfop,
+  } = productData;
 
   if (!name || !category_id || !price || !company_id || stock == null) {
     throw new Error("Todos os campos são obrigatórios.");
@@ -28,7 +39,11 @@ const upsertProduct = async (productData) => {
       category_id,
       price,
       company_id,
-      stock
+      stock,
+      barcode,
+      ncm,
+      aliquota,
+      cfop
     );
 
     return result;
@@ -41,56 +56,15 @@ const upsertProduct = async (productData) => {
   }
 };
 
-/*const createProduct = async ({
-  name,
-  category_id,
-  price,
-  company_id,
-  initialStock,
-}) => {
-  try {
-    if (
-      !name ||
-      !category_id ||
-      !price ||
-      !company_id ||
-      initialStock === undefined
-    ) {
-      throw new Error("Todos os campos obrigatórios devem ser preenchidos.");
-    }
-
-    // Validação adicional (se necessário)
-    if (price <= 0) {
-      throw new Error("O preço do produto deve ser maior que zero.");
-    }
-    if (initialStock < 0) {
-      throw new Error("O estoque inicial não pode ser negativo.");
-    }
-
-    // Chamando o repositório
-    const { product, stock } = await productRepository.createProduct(
-      name,
-      category_id,
-      price,
-      company_id,
-      initialStock
-    );
-
-    return { product, stock };
-  } catch (error) {
-    console.error(
-      "Erro no serviço de criação de produto e estoque:",
-      error.message
-    );
-    throw error; // Lança o erro para o controller tratar
-  }
-};*/
-
 export const updateProductAndStockService = async (
   product_id,
   name,
   category_id,
   price,
+  barcode,
+  ncm,
+  aliquota,
+  cfop,
   quantity,
   company_id
 ) => {
@@ -100,6 +74,10 @@ export const updateProductAndStockService = async (
       name,
       category_id,
       price,
+      barcode,
+      ncm,
+      aliquota,
+      cfop,
       quantity,
       company_id
     );

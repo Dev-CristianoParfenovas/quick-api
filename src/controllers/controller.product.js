@@ -29,7 +29,18 @@ const getProducts = async (req, res) => {
 };
 
 const createOrUpdateProduct = async (req, res) => {
-  const { id, name, category_id, price, company_id, stock } = req.body;
+  const {
+    id,
+    name,
+    category_id,
+    price,
+    company_id,
+    stock,
+    barcode,
+    ncm,
+    aliquota,
+    cfop,
+  } = req.body;
 
   try {
     const result = await serviceProducts.upsertProduct({
@@ -39,6 +50,10 @@ const createOrUpdateProduct = async (req, res) => {
       price,
       company_id,
       stock,
+      barcode,
+      ncm,
+      aliquota,
+      cfop,
     });
 
     return res.status(200).json({
@@ -54,54 +69,19 @@ const createOrUpdateProduct = async (req, res) => {
   }
 };
 
-// Criar um produto
-/*const createProduct = async (req, res) => {
-  try {
-    const { name, category_id, price, company_id, stock } = req.body;
-
-    // Verificar se todos os campos obrigatórios foram enviados
-    if (!name || !category_id || !price || !company_id || stock === undefined) {
-      return res.status(400).json({
-        message: "Todos os campos obrigatórios devem ser preenchidos.",
-      });
-    }
-
-    // Criar o produto e o estoque
-    const { product, stock: createdStock } =
-      await serviceProducts.createProduct({
-        name,
-        category_id,
-        price,
-        company_id,
-        initialStock: stock,
-      });
-
-    return res.status(201).json({
-      message: "Produto criado com sucesso!",
-      product,
-      stock: createdStock,
-    });
-  } catch (error) {
-    console.error("Erro ao criar produto:", error.message);
-
-    // Se o erro for sobre duplicidade, retorna erro 400
-    if (
-      error.message === "Já existe um produto com este nome para esta empresa."
-    ) {
-      return res.status(400).json({
-        message: error.message,
-      });
-    }
-
-    return res
-      .status(500)
-      .json({ message: "Erro interno no servidor. " + error.message });
-  }
-};*/
-
 export const updateProductAndStockController = async (req, res) => {
   const { product_id } = req.params;
-  const { name, category_id, price, quantity, company_id } = req.body;
+  const {
+    name,
+    category_id,
+    price,
+    barcode,
+    ncm,
+    aliquota,
+    cfop,
+    quantity,
+    company_id,
+  } = req.body;
 
   try {
     console.log("Dados recebidos no controlador:", {
@@ -109,6 +89,10 @@ export const updateProductAndStockController = async (req, res) => {
       name,
       category_id,
       price,
+      barcode,
+      ncm,
+      aliquota,
+      cfop,
       quantity,
       company_id,
     });
@@ -119,6 +103,10 @@ export const updateProductAndStockController = async (req, res) => {
       !name ||
       !category_id ||
       !price ||
+      !barcode ||
+      !ncm ||
+      !aliquota ||
+      !cfop ||
       !quantity ||
       !company_id
     ) {
@@ -134,6 +122,10 @@ export const updateProductAndStockController = async (req, res) => {
       name,
       category_id,
       price,
+      barcode,
+      ncm,
+      aliquota,
+      cfop,
       quantity,
       company_id
     );
