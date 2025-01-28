@@ -48,6 +48,19 @@ const upsertProductAndStock = async (
 ) => {
   const client = await pool.connect();
 
+  console.log("Valores recebidos no repositório:", {
+    id,
+    name,
+    category_id,
+    price,
+    company_id,
+    stockQuantity,
+    barcode,
+    ncm,
+    aliquota,
+    cfop,
+  });
+
   try {
     await client.query("BEGIN");
 

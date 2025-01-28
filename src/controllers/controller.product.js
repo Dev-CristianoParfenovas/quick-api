@@ -42,6 +42,19 @@ const createOrUpdateProduct = async (req, res) => {
     cfop,
   } = req.body;
 
+  console.log("Dados recebidos no controller:", {
+    id,
+    name,
+    category_id,
+    price,
+    company_id,
+    stock,
+    barcode,
+    ncm,
+    aliquota,
+    cfop,
+  });
+
   try {
     const result = await serviceProducts.upsertProduct({
       id, // Passa o id para o serviço

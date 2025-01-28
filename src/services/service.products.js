@@ -28,6 +28,20 @@ const upsertProduct = async (productData) => {
     cfop,
   } = productData;
 
+  // Insere o log aqui
+  console.log("Parâmetros recebidos no serviço:", {
+    id,
+    name,
+    category_id,
+    price,
+    barcode,
+    ncm,
+    aliquota,
+    cfop,
+    stock,
+    company_id,
+  });
+
   if (!name || !category_id || !price || !company_id || stock == null) {
     throw new Error("Todos os campos são obrigatórios.");
   }
